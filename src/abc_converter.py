@@ -1,9 +1,12 @@
 import sys
 import re
-from typing import Tuple
-
+from os import makedirs
+from glob import glob
+from typing import List, Tuple
 from openai import OpenAI
 from threading import Thread
+from pathlib import Path
+from abc2audio import abc2wav
 
 # クライアントオブジェクトを作る。これを作らないとAPIへの問い合わせができない。
 # ターミナルのカレントディレクトリから見て、`./src/credential/OPEN_AI_KEY.txt`に記述されているAPIキーを読み取って実行します。
@@ -24,7 +27,7 @@ def extract_abc_score(response:str) -> Tuple[bool, str]:
     ABC記譜法の楽譜`x`が抜き出せたとき: `(True, x)`
     ABC記譜法の楽譜が抜き出せなかったとき: `(False, response)`
     """
-    pattern = r'```abc\n([^`]+?)\n```"'
+    pattern = r'```abc\n([^`]+?)```'
     extracted_scores = re.findall(pattern, response)
 
     if len(extracted_scores) == 0: return (False, response)
@@ -34,38 +37,97 @@ def extract_abc_score(response:str) -> Tuple[bool, str]:
 
 # clientオブジェクトを使って、promptの内容でGPT-4に問い合わせます。
 # 問い合わせた結果が返り値になります。
-def ask(client:OpenAI, prompt:str, temperature:float) -> str:
+def ask(client:OpenAI, system_prompt:str, user_prompt:str, temperature:float) -> str:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "user", "content": prompt},
+            {"role": "system",  "content": system_prompt},
+            {"role": "user",    "content": user_prompt},
         ],
         temperature=temperature
     )
     result = response.choices[0].message.content
     return result if result != None else ""
 
+# test done
+def load_prompts() -> List[Tuple[str, str]]:
+    """
+    ./promptsフォルダにあるプロンプトをリストにして返す。
+    # returns
+    `load_prompts()[i] = (x, y)`
+    `i`番目にあったファイルの名前が`x`であり、その中身が`y`であった。
+    """
+    result:List[Tuple[str, str]] = []
+    # リストとしてpromptsフォルダの中にあるテキストファイルを全て列挙したい
+    for filepath in glob("prompts/*"):
+        with open(filepath) as f:
+            result.append((Path(filepath).stem, f.read()))
+    return result
 
-prompt = "Say a random number between 0 and 100."
-client = get_client()
 
-assert len(sys.argv) == 2
-temperature = float(sys.argv[1])
-num_threads = 5
-num_rounds = 2
+def test():
+    print(load_prompts())
+    print(extract_abc_score("""
+this is the test message
+```abc
+    super abc string 
+```
+And final result.
+```abc
+    another super abc string
+```
+    """))
+    print(extract_abc_score("""
+There is no abc code block.
+    """))
 
-for i in range(num_rounds):
-    threads:list[Thread] = []
-    results = [""] * (num_threads)
-	# いくつものスレッドを立ち上げて、各スレッドごとにGPT-4に問い合わせる。
-    for j in range(num_threads):
-    	# スレッドを作り、終了した時に問い合わせた結果をresult[j]に記述する。
-        thread = Thread(target = lambda j=j: results.__setitem__(j, ask(client, prompt, temperature)))
-        thread.start()
-        threads.append(thread)
+def generate_music(client:OpenAI, experiment_name:str, system_prompt:str, user_prompt:str, tempareture:float):
+    def filename(ext:str):
+        return Path(f"./result/{ext}/{experiment_name}.{ext}")
+
+    # GPT-4に問う
+    answer = ask(client, system_prompt, user_prompt, tempareture)
+    answer_file = filename("ans")
+    makedirs(answer_file.parent, exist_ok=True)
+    with open(answer_file, mode='w') as f:
+        f.write(answer)
     
-    # 各スレッドが終了するまで待つ    
-    for thread in threads:
-        thread.join()
+    # ABC形式をプロンプトから抽出する
+    (succeeded, abc_score) = extract_abc_score(answer)
+    abc_file = filename("abc")
+    makedirs(abc_file.parent, exist_ok=True)
     
-    print(results)
+    # 抽出できた時に限り、wav形式へ変換する
+    if (succeeded):
+        with open(abc_file, mode='w') as f:
+            f.write(abc_score)
+        abc2wav(str(abc_file))
+        
+
+
+def do_experiment():
+    client = get_client()
+
+    assert len(sys.argv) == 2
+    temperature = float(sys.argv[1])
+    user_prompt = "8小節の楽曲を作って"
+    num_threads = 20
+
+    for (exp_name, prompt) in load_prompts():
+        threads:list[Thread] = []
+        # いくつものスレッドを立ち上げて、各スレッドごとにGPT-4に問い合わせる。
+        for th in range(num_threads):
+            thread = Thread(
+                target=generate_music,
+                args=(client, exp_name, prompt, user_prompt, temperature)
+            )
+            thread.start()
+            threads.append(thread)
+        
+        # 各スレッドが終了するまで待つ    
+        for thread in threads:
+            thread.join()
+    
+
+if __name__ == "__main__":
+    test()
