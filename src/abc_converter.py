@@ -1,4 +1,6 @@
 import sys
+import re
+from typing import Tuple
 
 from openai import OpenAI
 from threading import Thread
@@ -10,6 +12,25 @@ def get_client():
     with open("src/credential/OPEN_AI_KEY.txt") as f:
         OPEN_AI_KEY = f.read()
     return OpenAI(api_key=OPEN_AI_KEY)
+
+
+#TODO test this function
+def extract_abc_score(response:str) -> Tuple[bool, str]:
+    """
+    入力`response`から最後にコードブロックに記述されたABC形式の楽譜を抜き出す。
+    ただし、抜き出すことに失敗した場合には、全文を返す。
+    
+    # returns
+    ABC記譜法の楽譜`x`が抜き出せたとき: `(True, x)`
+    ABC記譜法の楽譜が抜き出せなかったとき: `(False, response)`
+    """
+    pattern = r'```abc\n([^`]+?)\n```"'
+    extracted_scores = re.findall(pattern, response)
+
+    if len(extracted_scores) == 0: return (False, response)
+    return (True, extracted_scores[-1])
+    
+
 
 # clientオブジェクトを使って、promptの内容でGPT-4に問い合わせます。
 # 問い合わせた結果が返り値になります。
