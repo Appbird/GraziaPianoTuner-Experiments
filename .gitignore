@@ -1,1 +1,4 @@
 sf2/**
+.DS_Store
+*.mid
+*.wav
