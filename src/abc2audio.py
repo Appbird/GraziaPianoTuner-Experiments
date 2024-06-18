@@ -14,21 +14,15 @@ def write_wav_from_midi(midi_file_path:str, wav_file_path:str, gain:float):
         "-F", wav_file_path,
         # Set the master gain [0 < gain < 10, default = 0.2]
         "-g", str(gain),
+        # Do not print welcome message or other informational output
+        "-q",
         sound_font_path,
         midi_file_path,
     ])
 
-def abc2wav(input_abc_path:str):
-    def dir_stem_ext(filedir:Path, filestem:str, ext:str):
-        return f"{filedir/Path(f'{filestem}.{ext}')}"
-    
+def abc2wav(input_abc_path:str, midi_file:str, wav_file:str):
     filepath = Path(input_abc_path)
-    filestem = filepath.stem
-    filedir = filepath.parent
-
     abc_file = str(filepath)
-    midi_file = dir_stem_ext(filedir, filestem, "mid")
-    wav_file = dir_stem_ext(filedir, filestem, "wav")
     
     conv_result = write_midi_from_abc(abc_file, midi_file)
     if conv_result.returncode != 0 : return False
@@ -40,6 +34,5 @@ def abc2wav(input_abc_path:str):
 
 if __name__ == "__main__":
     assert len(sys.argv) == 2
-    abc2wav(input_abc_path=sys.argv[1])
     
 
