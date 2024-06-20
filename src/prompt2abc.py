@@ -19,14 +19,6 @@ def extract_abc_score(response:str) -> Tuple[bool, str]:
     abc_score = postprocess(extracted_scores[-1])
     return (True, abc_score)
 
-class SoundEvent:
-    def __init__(self, pitch:str, length:Fraction):
-        self.pitch = pitch
-        self.length = length
-class Measure:
-    def __init__(self, sound_events:list[SoundEvent]):
-
-
 def postprocess(extracted_score:str):
     result_score = shrink_empty_lines(extracted_score)
     lines = []
@@ -40,12 +32,6 @@ def postprocess(extracted_score:str):
         else:
             lines.append(line)
     return "\n".join(lines)
-
-def measure_meters(abc_score_line:str):
-    sound_pattern = (r"[a-gA-G][,']?([0-9]+/?[0-9]*)?")
-    for (line, is_header) in add_header_info(abc_score_line):
-        if (is_header): continue
-
 
 def shrink_empty_lines(abc_score:str):
     """
@@ -76,30 +62,6 @@ def read_rythm_info(abc_score:str):
             if unit_note_length_pattern.match(line):    unit_note_length = Fraction(line.split(":")[1])
     return (meter, unit_note_length)
 
-def replace_on_sound_seq(piece:str):
-    """
-    ある臨時記号を持たない単音`X`に対して、`X#`, `Xb`を`^X`, `_X`に置換する。
-    ただし、ABC記譜法において、1小節を含んだ
-    """
-    sound_pattern = r"([a-gA-G][,']?)"
-    wrong_pattern_sharp = sound_pattern + r"#"
-    wrong_pattern_flat = sound_pattern + r"b"
-    
-    piece = re.sub(wrong_pattern_sharp, "^\\1", piece)
-    piece = re.sub(wrong_pattern_flat, "_\\1", piece)
-    return piece
-
-#TODO 音bが実際に楽曲として含まれていた含まれていた場合、置換するのは不適当である。
-def modify_accents(abc_score:str):
-    """
-    渡されたABC記譜法の楽譜に対して、"で囲まれた部分（コード表記）を除き、`X#`, `Xb`を`^X`, `_X`に置換する。
-    GPT-4の出力したABC記譜法において、臨時記号の誤りを訂正するため。
-    """
-    proceeded_pieces = [
-        replace_on_sound_seq(piece) if ind % 2 == 0 else piece
-        for (ind, piece) in enumerate(abc_score.split('\"'))
-    ]
-    return "\"".join(proceeded_pieces)
 
 
 def test():
