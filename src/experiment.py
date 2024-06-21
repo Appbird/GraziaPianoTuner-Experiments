@@ -12,8 +12,8 @@ from Result import Result, ResultOK
 # パラメータ群
 MODEL_NAME = "gpt-4o"
 TEMPARATURE = 1.0
-NUM_TRIALS = 10
-USER_PROMPT = "compose something in 8 bars."
+NUM_TRIALS = 20
+USER_PROMPT = "Please compose a sunny day music."
 
 # クライアントオブジェクトを作る。これを作らないとAPIへの問い合わせができない。
 # ターミナルのカレントディレクトリから見て、`./src/credential/OPEN_AI_KEY.txt`に記述されているAPIキーを読み取って実行します。

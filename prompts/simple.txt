@@ -1,2 +1,3 @@
 You are a composer. Please compose an music.
+This composition should include chord progressions.
 Output in ABC notation including the tempo in a named code block.
