@@ -1,23 +1,25 @@
 import re
 from typing import Tuple
 from fractions import Fraction
+from Result import Result, ProcessState, ResultOK
 
 #TODO test this function
-def extract_abc_score(response:str) -> Tuple[bool, str]:
+def extract_abc_score(response:str) -> tuple[Result, str]:
     """
     入力`response`から最後にコードブロックに記述されたABC形式の楽譜を抜き出す。
     ただし、抜き出すことに失敗した場合には、全文を返す。
     また、ABC記譜法に2行以上の連続した改行があった際には、1行の改行に置換する。
 
     # returns
-    ABC記譜法の楽譜`x`が抜き出せたとき: `(True, x)`
-    ABC記譜法の楽譜が抜き出せなかったとき: `(False, response)`
+    ABC記譜法の楽譜`x`が抜き出せたとき: `(ResultOK(), x)`
+    ABC記譜法の楽譜が抜き出せなかったとき: `(Result(ProcessState.FAILED_EXTRACT_AUDIO, "There is no abc score in output."), response)`
     """
     pattern = r'```abc\n([^`]+?)```'
     extracted_scores = re.findall(pattern, response)
-    if len(extracted_scores) == 0: return (False, response)
+    if len(extracted_scores) == 0: return (Result(ProcessState.FAILED_EXTRACT_AUDIO, "There is no abc score in output."), response)
+    
     abc_score = postprocess(extracted_scores[-1])
-    return (True, abc_score)
+    return (ResultOK(), abc_score)
 
 def postprocess(extracted_score:str):
     result_score = shrink_empty_lines(extracted_score)
@@ -27,7 +29,6 @@ def postprocess(extracted_score:str):
         if is_header:
             line = re.sub("maj", "", line)
             line = re.sub("min", "m", line)
-            line = modify_accents(line)
             lines.append(line)
         else:
             lines.append(line)
@@ -76,8 +77,6 @@ another super abc string
 ```
     """) == (True, 'another super _ac string')
     assert extract_abc_score("\nThere is no abc code block.\n") == (False, '\nThere is no abc code block.\n')
-
-    assert replace_on_sound_seq("A#CbEA") == "^A_CEA"
 
     score_example = """
 X:1

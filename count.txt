@@ -1,0 +1,50 @@
+試行回数 10
+
+```abc
+X: 1
+T: Sunshine Delight
+M: 4/4
+L: 1/8
+Q: 1/4=140
+K: G major
+V:1
+|: "G" G2 B2 d2 B2 | "C" e2 g4 e2 | "D" d2 f2 ^c2 A2 | "G" B2 G2 D4 |
+| "G" G2 B2 d2 B2 | "Em" E2 G2 B2 G2 | "C" e2 g4 e2 | "D" d2 ^c2 A2 F2 |
+| "G" B2 B2 d2 B2 | "C" c2 e2 g2 e2 | "Am" ^c2 A4 B2 | "G" G2 B2 D4 :|
+| "G" d2 B2 G2 B2 | "C" e2 c2 e4 d2 | "G" B2 G2 d4 c2 | "D" A2 ^c2 A4 |
+| "G" G2 B2 d2 B2 | "Em" E2 G2 B4 z2 | "C" e2 g2 e4 d2 | "D" ^c2 d2 A4 |
+| "G" G2 B2 d2 B2 | "C" e2 c2 e4 d2 | "G" B2 G2 d4 c2 | "D" A2 ^c2 A4 z2 :|
+```
+
+```abc
+X:1
+T:Sunny Day Revised
+M:4/4
+L:1/8
+Q:1/4=120
+K:G
+V:1
+|: "G" G2 B2 d2 e2 | "C" e2 d2 "G" B2 G2 | "Am" A2 c2 "D7" d4 | "G" G4 z4 :|
+| "G" g2 f2 "C" e2 d2 | "G" B2 A2 "Em" G B2 | "Am" c2 B2 "D7" A2 F2 | "G" G4 z4 |
+| "C" e4 e2 d2 | "Am" c4 d2 F2 | "G" B2 G2 "C" e4 | "Em" G4 "D7" F4 | 
+| "G" g2 f2 "C" e2 d2 | "G" B2 A2 "Em" G B2 | "Am" c2 B2 "D7" A2 F2 | "G" G4 G4 |
+```
+
+```abc
+X:1
+T:Sunny Day Revised
+M:4/4
+L:1/8
+Q:1/4=140
+K:G
+V:1
+|: "G" G2 B2 d2 d2 | "C" c2 e2 e2 d2 | "G" g4 d4 | "D7" ^f2 e2 d4 |
+| "G" G2 B2 d2 d2 | "C" e4 g4 | "G" b2 g2 b2 a2 | "D7" f2 d2 B4 :|
+| "C" G2 c2 e2 g2 | "G" a4 b4 | "D7" f2 f2 g2 a2 | "G" ^f2 g2 f4 |
+| "C" G2 c2 e2 g2 | "G" d4 B4 | "D7" f2 f2 g2 a2 | "G" b2 g2 f4 |
+| "G" G2 B2 d2 d2 | "C" e4 g4 | "G" d2 g2 b4 | "D7" f2 e2 d4 |
+| "G" G2 B2 d2 d2 | "C" e4 g4 | "G" g2 b2 d4 | "D7" f2 d2 B4 |
+```
+
+
+

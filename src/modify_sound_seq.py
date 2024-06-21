@@ -19,8 +19,6 @@ class ReplacedRanges:
             result += after
             completed_before = end
         
-
-
 def replace_range(target:str, repl:str, begin:int, end:int):
     return target[:begin] + repl + target[end:]
 

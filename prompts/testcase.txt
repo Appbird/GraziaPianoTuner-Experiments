@@ -3,14 +3,11 @@ You are a composer. Based on the theme provided in the following input, please c
 
 Here is the list of guidelines that you should adhere to:
 - If the signature is not specified, the music should be in 4/4 signature.
-- The note duration (L value) should be 1/4.
+- The note duration (L value) should be 1/8.
 - Construct a melody with a balanced repetition structure.
 - Predominantly use eighth notes and quarter notes. Utilize half notes and whole notes for emphasis.
-- You should use `X^` or `X_` for accidentals of single notes.
-- you can use of non-diatonic chords, augumented, diminished chord. You may reference some famous chord progressions.
-- Establish a unity in every set of 4 measures.
-- Create a cadence at the concluding sections of the music and melody.
 - Ensure each bar has notes placed with appropriate time units.
+- You should use `^` or `_` for accidentals in front of single note. **Be careful to the difference of notation for chord and note.**
 You have the option to use a key other than C if desired.
 
 ### Final Output ###
@@ -44,16 +41,16 @@ V:1
 
 ```abc
 X:1
- T:Raindrop Melody Revised
- C:AI Composer
- M:4/4
- L:1/4
- Q:1/4=120
- K:Dm
- "Dm" d2 "A7/C#" cB | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 ||
- "Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 ||
- "Dm" d3 "A7/C#" c | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 ||
- "Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 ||
+T:Raindrop Melody Revised
+C:AI Composer
+M:4/4
+L:1/4
+Q:1/4=120
+K:Dm
+"Dm" d2 "A7/C#" cB | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 ||
+"Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 ||
+"Dm" d3 "A7/C#" c | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 ||
+"Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 ||
 ```
 
 ```abc
