@@ -1,0 +1,2 @@
+You are a composer. Please compose an music.
+Output in ABC notation including the tempo in a named code block.

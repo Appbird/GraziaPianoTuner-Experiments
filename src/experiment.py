@@ -12,7 +12,7 @@ from Result import Result, ResultOK
 # パラメータ群
 MODEL_NAME = "gpt-4o"
 TEMPARATURE = 1.0
-NUM_TRIALS = 1
+NUM_TRIALS = 10
 USER_PROMPT = "compose something in 8 bars."
 
 # クライアントオブジェクトを作る。これを作らないとAPIへの問い合わせができない。
@@ -61,7 +61,7 @@ def test():
 
 def generate_music(client:OpenAI, exp_name:str, thread_results:list[Result], exp_no:int, system_prompt:str, user_prompt:str):
     def filename(ext:str):
-        return Path(f"./result/{MODEL_NAME}/{exp_name}/{exp_no+1}.{ext}")
+        return Path.cwd()/Path(f"result/{MODEL_NAME}/{exp_name}/{exp_no+1}.{ext}")
     answer_file = filename("ans")
     abc_file    = filename("abc")
     midi_file   = filename("midi")
@@ -84,25 +84,26 @@ def generate_music(client:OpenAI, exp_name:str, thread_results:list[Result], exp
     makedirs(wav_file.parent, exist_ok=True)
     with open(abc_file, mode='w') as f:
         f.write(abc_score)
-        thread_results[exp_no] = abc2wav(str(abc_file), str(midi_file), str(wav_file))
+    #FIXED fがclosedされる前に新しく書き込みを加えてたせいでアクセスできていなかった
+    thread_results[exp_no] = abc2wav(str(abc_file), str(midi_file), str(wav_file))
 
 
 def write_error_log(exp_name:str, thread_results:list[Result]):
-    makedirs(f"./result/{MODEL_NAME}/{exp_name}/", exist_ok=True)
+    makedirs(Path.cwd()/f"result/{MODEL_NAME}/{exp_name}/", exist_ok=True)
     success_cases_count = 0
     perfect_cases_count = 0
-    with open(Path(f"./result/{MODEL_NAME}/{exp_name}/error.log"), mode='w') as f:
+    with open(Path.cwd()/Path(f"result/{MODEL_NAME}/{exp_name}/error.log"), mode='w') as f:
         for (trial_no, result) in enumerate(thread_results):
+            if (result.is_ok()):
+                success_cases_count += 1
             if (len(result.reason) == 0):
                 perfect_cases_count += 1
                 continue
-            if (result.is_ok()):
-                success_cases_count += 1
             f.write(f"[{trial_no}: {result.state.name}] {result.reason}\n")
             f.write(f"\n")
         f.write("\n")
         f.write(f"[INFO] perfect {perfect_cases_count}, success {success_cases_count} / {NUM_TRIALS}")
-    return success_cases_count, perfect_cases_count
+    return perfect_cases_count, success_cases_count
 
 def do_experiment():
     client = get_client()

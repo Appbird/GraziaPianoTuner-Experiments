@@ -1,9 +1,12 @@
 ### Instructions ###
-You are a composer. Based on the theme provided in the following input, please compose a piano music. This composition should include chord progressions.
+
+You are a composer.
+Based on the theme provided in the following input,
+please compose a piano music. This composition should include chord progressions.
 
 Here is the list of guidelines that you should adhere to:
 - If the signature is not specified, the music should be in 4/4 signature.
-- The note duration (L value) should be 1/8.
+- The note duration (L value) should be 1/4.
 - Construct a melody with a balanced repetition structure.
 - Predominantly use eighth notes and quarter notes. Utilize half notes and whole notes for emphasis.
 - Ensure each bar has notes placed with appropriate time units.
@@ -14,7 +17,7 @@ You have the option to use a key other than C if desired.
 Please follow these steps to achieve a better result:
 1. summerize the prompt.
 2. Compose a piece of piano music tailored to the given theme. You may reference some famous chord progressions and melodies.
-3. Identify at least four conditions in the provided list that the music you create does not satisfy.
+3. Identify two conditions in the provided list that the music you create does not satisfy.
 4. Discuss how to address these issues. You should specify which sections need to be adjusted.
 5. Apply these strategies to the previously composed music.
 
@@ -22,6 +25,7 @@ If the input includes emotional parameters, please compose a piano piece accordi
 Note that the emotional parameters takes values from -1 to 1.
 Please proceed these steps in English.
 
+### Output ###
 - ABC notation including the tempo in a named code block.
 
 ### Examples ###
@@ -33,10 +37,10 @@ L: 1/4
 Q: 1/4=160
 K: A major
 V:1
-|: "A" ceeA | "D" df^cd | "Bm" eA^ce | "E7" ^G2e2 |
-| "A" aece | "F#m" f^fed | "D" dBA^G | "A" A2 z2 :|
+| "A" ceeA | "D" df^cd | "Bm" eA^ce | "E7" ^G2e2 |
+| "A" aece | "F#m" f^fed | "D" dBA^G | "A" A2 z2 |
 | "D" d2 fd | "C#m" e^ceg | "Bm" bABc | "E7" e4 |
-| "A" c'ba^g | "D" afed | "A/C#" cBA^G | "A" A4 |]
+| "A" c'ba^g | "D" afed | "A/C#" cBA^G | "A" A4 |
 ```
 
 ```abc
@@ -47,10 +51,10 @@ M:4/4
 L:1/4
 Q:1/4=120
 K:Dm
-"Dm" d2 "A7/C#" cB | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 ||
-"Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 ||
-"Dm" d3 "A7/C#" c | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 ||
-"Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 ||
+|"Dm" d2 "A7/C#" cB | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 |
+|"Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 |
+|"Dm" d3 "A7/C#" c | "Bb" AG "Gm/A" F2 | "Gm/Bb" G2 "A7" F2 | "Dm" D4 |
+|"Dm/C" c2 "Bdim/A" BA | "Gm" G3 "A7" A | "Dm/F" F2 "E7/G#" GA | "Am" A4 |
 ```
 
 ```abc
@@ -58,9 +62,10 @@ X:1
 T:Sunny, Shiny, Forest
 M:4/4
 Q:1/4 = 180
+L:1/4
 K:D
-| "Dmaj7" DFAF "A7" ACEA | "Gmaj7" GBdB "F#m7" AFCE | "Em7" EGBE "Bm7" DFAD | "E7" ^GBDG "A7" AECA |
-| "Dmaj7" DFAF "Gmaj7" GBdB | "F#m7" AFCE "Bm7" DFAD | "E7" ^GBDG "A7" AECA | "Dmaj7" DFAF "A7" A2E2 |
-| "Dmaj7" D2F2 "Gmaj7" G2B2 | "F#m7" AFCE "Em7" GBDG | "A7" AECA "Dmaj7" D2F2 | "Gmaj7" G2B2 "A7" A2E2 |
-| "Dmaj7" D4 "Gmaj7" G4 | "F#m7" AFCE "Bm7" DFAD | "E7" ^GBDG "A7" AECA | "Dmaj7" D2F2 "A7" A2E2 |"Dmaj7" D2 C2 D4 |
+| "Dmaj7" D/2F/2A/2F/2 "A7" A/2C/2E/2A/2 | "Gmaj7" G/2B/2d/2B/2 "F#m7" A/2F/2C/2E/2 | "Em7" E/2G/2B/2E/2 "Bm7" D/2F/2A/2D/2 | "E7" ^G/2B/2D/2G/2 "A7" A/2E/2C/2A/2 |
+| "Dmaj7" D/2F/2A/2F/2 "Gmaj7" G/2B/2d/2B/2 | "F#m7" A/2F/2C/2E/2 "Bm7" D/2F/2A/2D/2 | "E7" ^G/2B/2D/2G/2 "A7" A/2E/2C/2A/2 | "Dmaj7" D/2F/2A/2F/2 "A7" AE |
+| "Dmaj7" DF "Gmaj7" GB | "F#m7" A/2F/2C/2E/2 "Em7" G/2B/2D/2G/2 | "A7" A/2E/2C/2A/2 "Dmaj7" DF | "Gmaj7" GB "A7" AE |
+| "Dmaj7" D2 "Gmaj7" G2 | "F#m7" A/2F/2C/2E/2 "Bm7" D/2F/2A/2D/2 | "E7" ^G/2B/2D/2G/2 "A7" A/2E/2C/2A/2 | "Dmaj7" DF "A7" AE |"Dmaj7" D C D2 |
 ```
