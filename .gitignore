@@ -5,3 +5,4 @@ sf2/**
 credential/*
 result/gpt-4o/*
 *.pyc
+result/**

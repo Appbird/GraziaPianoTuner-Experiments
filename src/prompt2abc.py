@@ -14,7 +14,7 @@ def extract_abc_score(response:str) -> tuple[Result, str]:
     ABC記譜法の楽譜`x`が抜き出せたとき: `(ResultOK(), x)`
     ABC記譜法の楽譜が抜き出せなかったとき: `(Result(ProcessState.FAILED_EXTRACT_AUDIO, "There is no abc score in output."), response)`
     """
-    pattern = r'```abc\n([^`]+?)```'
+    pattern = r'```[^\n]*\n([^`]+?)```'
     extracted_scores = re.findall(pattern, response)
     if len(extracted_scores) == 0: return (Result(ProcessState.FAILED_EXTRACT_AUDIO, "There is no abc score in output."), response)
     

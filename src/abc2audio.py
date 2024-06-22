@@ -10,7 +10,10 @@ def write_midi_from_abc(abc_file_path:str, midi_file_path:str) -> Result:
         cwd=Path.cwd()
     )
     out, _ = sbp.communicate()
-    stdout_content = out.decode('utf-8')
+    try:
+        stdout_content = out.decode('utf-8')
+    except UnicodeDecodeError:
+        stdout_content = "Failed to decode stdout; UnicodeDecodeError."
     if any([line.startswith("Error") for line in stdout_content.splitlines()]): return Result(ProcessState.FAILED_ABC2MIDI, stdout_content)
     if any([line.startswith("Warning") for line in stdout_content.splitlines()]): return Result(ProcessState.OK, stdout_content)
     return ResultOK()

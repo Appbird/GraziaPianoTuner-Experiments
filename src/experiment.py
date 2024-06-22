@@ -5,15 +5,19 @@ from openai import OpenAI
 from threading import Thread
 from pathlib import Path
 
+from time import sleep
+
 from abc2audio import abc2wav
 from prompt2abc import extract_abc_score
 from Result import Result, ResultOK
 
 # パラメータ群
-MODEL_NAME = "gpt-4o"
+## GPT-4-turbo-
+MODEL_NAME = "gpt-3.5-turbo-0125"
 TEMPARATURE = 1.0
-NUM_TRIALS = 20
-USER_PROMPT = "Please compose a sunny day music."
+NUM_TRIALS = 10
+NUM_THREAD = 5
+USER_PROMPT = "Please compose a rainy day music."
 
 # クライアントオブジェクトを作る。これを作らないとAPIへの問い合わせができない。
 # ターミナルのカレントディレクトリから見て、`./src/credential/OPEN_AI_KEY.txt`に記述されているAPIキーを読み取って実行します。
@@ -46,10 +50,12 @@ def load_prompts() -> List[Tuple[str, str]]:
     # returns
     `load_prompts()[i] = (x, y)`
     `i`番目にあったファイルの名前が`x`であり、その中身が`y`であった。
+    ただし、`_`から始まるファイルは無視する。
     """
     result:List[Tuple[str, str]] = []
     # リストとしてpromptsフォルダの中にあるテキストファイルを全て列挙したい
     for filepath in glob("prompts/*"):
+        if Path(filepath).stem.startswith("_"): continue
         with open(filepath) as f:
             result.append((Path(filepath).stem, f.read()))
     return result
@@ -99,7 +105,7 @@ def write_error_log(exp_name:str, thread_results:list[Result]):
             if (len(result.reason) == 0):
                 perfect_cases_count += 1
                 continue
-            f.write(f"[{trial_no}: {result.state.name}] {result.reason}\n")
+            f.write(f"[{trial_no + 1}: {result.state.name}] {result.reason}\n")
             f.write(f"\n")
         f.write("\n")
         f.write(f"[INFO] perfect {perfect_cases_count}, success {success_cases_count} / {NUM_TRIALS}")
@@ -111,21 +117,31 @@ def do_experiment():
     phase_count = 0
     for (exp_name, prompt) in load_prompts():
         print(f"[INFO] starts {exp_name}.")
-        threads:list[Thread] = []
         thread_results:list[Result] = [ResultOK()] * NUM_TRIALS
-        # いくつものスレッドを立ち上げて、各スレッドごとにGPT-4に問い合わせる。
-        for trial_no in range(NUM_TRIALS):
-            thread = Thread(
-                target=generate_music,
-                args=(client, exp_name, thread_results, trial_no, prompt, USER_PROMPT)
-            )
-            thread.start()
-            threads.append(thread)
-        
-        # 各スレッドが終了するまで待つ    
-        for thread in threads:
-            thread.join()
 
+        assert NUM_TRIALS % NUM_THREAD == 0
+        wave_count = NUM_TRIALS // NUM_THREAD
+        # いくつかのwaveに分けて問い合わせを分散する。
+        for wave in range(wave_count):
+            print(f"[INFO] starts wave {wave + 1} / { wave_count } in {exp_name}.")
+            threads:list[Thread] = []
+            # いくつものスレッドを立ち上げて、各スレッドごとにGPT-4に問い合わせる。
+            for thread_no in range(NUM_THREAD):
+                trial_no = wave * NUM_THREAD + thread_no
+                thread = Thread(
+                    target=generate_music,
+                    args=(client, exp_name, thread_results, trial_no, prompt, USER_PROMPT)
+                )
+                thread.start()
+                threads.append(thread)
+
+            # 各スレッドが終了するまで待つ    
+            for thread in threads:
+                thread.join()
+            print(f"[INFO] finish wave {wave + 1} / {wave_count} in {exp_name}.")
+
+            # APIを叩きすぎるとレート制限に引っかかるため、適宜休憩を入れる。
+            sleep(35)
         # エラーのログを出力させる。
         perfect_cases_count, success_cases_count = write_error_log(exp_name, thread_results)
         phase_count += 1
