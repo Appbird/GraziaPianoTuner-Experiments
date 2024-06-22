@@ -15,9 +15,9 @@ from Result import Result, ResultOK
 ## GPT-4-turbo-
 MODEL_NAME = "gpt-3.5-turbo-0125"
 TEMPARATURE = 1.0
-NUM_TRIALS = 10
-NUM_THREAD = 5
-USER_PROMPT = "Please compose a rainy day music."
+NUM_TRIALS = 20
+NUM_THREAD = 10
+USER_PROMPT = "Please compose a sunny day music."
 
 # クライアントオブジェクトを作る。これを作らないとAPIへの問い合わせができない。
 # ターミナルのカレントディレクトリから見て、`./src/credential/OPEN_AI_KEY.txt`に記述されているAPIキーを読み取って実行します。
