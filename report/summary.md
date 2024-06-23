@@ -52,8 +52,8 @@
 | system prompt name | user-prompt | perfect | success | generated count | 備考 |
 |----------|-------------|--------|---------|-----------------|---|
 | super-simple              | sunny | 43 | 89 | 100 | コード進行が含まれずに生成されている曲あり |
-| simple                    | sunny | 30 | 73 | 100 | | 
-| without_refine_pattern    | sunny | 73 | 92 | 100 | |
+| simple                    | sunny | 30 | 73 | 100 |  | 
+| without_refine_pattern    | sunny | 73 | 92 | 100 |  |
 | simple                    | rainy | 19 | 62 | 100 |  |
 | super-simple              | rainy | 32 | 77 | 100 |  |
 | without_refine_pattern    | rainy | 64 | 98 | 100 |  |
@@ -67,27 +67,27 @@
 
 ## user promptが`sunny`であった場合
 
-| model name             | perfect | success | generated count | perfect ratio | success ratio |
-|------------------------|---------|---------|-----------------|---------------|---------------|
-| gpt-3.5-turbo-0125     | 67      | 99      | 100             | 0.670         | 0.990        |
-| gpt-4-0613             | 62      | 95      | 100              | 0.550         | 0.975         |
-| gpt-4-turbo-2024-04-09 | 83      | 95      | 100              | 0.800         | 0.900         |
-| GPT-4o-2024-05-13      | 73      | 92      | 100             | 0.730         | 0.920         |
-| Gemini-1.5-Pro-001     | 14      | 34      | 100             | 0.730         | 0.920         |
+| model name             | perfect | success | generated count |
+|------------------------|---------|---------|-----------------|
+| gpt-3.5-turbo-0125     | 67      | 99      | 100             |
+| gpt-4-0613             | 62      | 95      | 100              |
+| gpt-4-turbo-2024-04-09 | 83      | 95      | 100              |
+| GPT-4o-2024-05-13      | 73      | 92      | 100             |
+| Gemini-1.5-Pro-001     | 14      | 34      | 100             |
 
 ## user promptが`rainy`であった場合
 
-| model name             | perfect | success | generated count | perfect ratio | success ratio |
-|------------------------|---------|---------|-----------------|---------------|---------------|
-| gpt-3.5-turbo-0125     | 50      | 96      | 100             | 0.50          | 0.96          |
-| gpt-4-0613             | 60      | 92      | 100             | 0.60          | 0.92          |
-| gpt-4-turbo-2024-04-09 | 73      | 88      | 100             | 0.73          | 0.88          |
-| without_refine_pattern | 64      | 98      | 100             | 0.64          | 0.98          |
-| Gemini-1.5-Pro-001     | 4       | 34      | 100             | 0.64          | 0.98         |
+| model name             | perfect | success | generated count |
+|------------------------|---------|---------|-----------------|
+| gpt-3.5-turbo-0125     | 50      | 96      | 100             |
+| gpt-4-0613             | 60      | 92      | 100             |
+| gpt-4-turbo-2024-04-09 | 73      | 88      | 100             |
+| GPT-4o-2024-05-13      | 64      | 98      | 100             |
+| Gemini-1.5-Pro-001     | 4       | 34      | 100             |
 
-
-- ほぼ全てのケースにおいて、同じ程度の`success`率を見せた。
-- `sunny`において`gpt-3.5-turbo-0125`, `gpt-4-0613`が、`perfect`率で引けをとっている。
 - こちらでも`rainy`の方が不安定になりやすいとわかる。
-  - `gpt-4-0613`, `gpt-4-turbo-2024-04-09`, `GPT-4o-2024-05-13`はその不安定化に比較的耐えている方だと見える。
-- 参考までに、生成速度が一番早いのは、gpt-3.5-turbo-0125とGPT-4o。
+  - その中でも、`gpt-3.5-turbo-0125`は大きくperfectの率を落としてしまった。
+- ほぼ全てのケースにおいて、同じ程度の`success`率を見せた。
+  - そのなかでも特に高いのが`GPT-4o-2024-05-13`だった。
+- `perfect`率は、`gpt-4-turbo-2024-04-09`の方が高い。
+- なお、生成速度が一番早いのは、`gpt-3.5-turbo-0125`と`GPT-4o-2024-05-13`である。
