@@ -1,7 +1,6 @@
 from os import makedirs
 from glob import glob
 from typing import List, Tuple
-from openai import OpenAI
 from threading import Thread
 from pathlib import Path
 
@@ -14,35 +13,10 @@ from Result import Result, ResultOK
 from gemini import set_gemini_API_Key, ask_gemini_pro
 
 # パラメータ群
-MODEL_NAME = "gpt-4-turbo-2024-04-09"
-TEMPARATURE = 1.0
-NUM_TRIALS = 40
+MODEL_NAME = 'gemini-1.5-pro-001'
+NUM_TRIALS = 100
 NUM_THREAD = 10
 USER_PROMPT = "Please compose a rainy day music."
-
-# クライアントオブジェクトを作る。これを作らないとAPIへの問い合わせができない。
-# ターミナルのカレントディレクトリから見て、`./src/credential/OPEN_AI_KEY.txt`に記述されているAPIキーを読み取って実行します。
-def get_client():
-    OPEN_AI_KEY = ""
-    with open("credential/OPEN_AI_KEY.txt") as f:
-        OPEN_AI_KEY = f.read()
-    return OpenAI(api_key=OPEN_AI_KEY)
-
-
-
-# clientオブジェクトを使って、promptの内容でGPT-4に問い合わせます。
-# 問い合わせた結果が返り値になります。
-def ask(client:OpenAI, system_prompt:str, user_prompt:str) -> str:
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "system",  "content": system_prompt},
-            {"role": "user",    "content": user_prompt},
-        ],
-        temperature=TEMPARATURE
-    )
-    result = response.choices[0].message.content
-    return result if result != None else ""
 
 # test done
 def load_prompts() -> List[Tuple[str, str]]:
@@ -66,7 +40,7 @@ def test():
     print(load_prompts())
 
 
-def generate_music(client:OpenAI, exp_name:str, thread_results:list[Result], exp_no:int, system_prompt:str, user_prompt:str):
+def generate_music(exp_name:str, thread_results:list[Result], exp_no:int, system_prompt:str, user_prompt:str):
     def filename(ext:str):
         return Path.cwd()/Path(f"result/{MODEL_NAME}/{exp_name}/{exp_no+1}.{ext}")
     answer_file = filename("ans")
@@ -74,8 +48,8 @@ def generate_music(client:OpenAI, exp_name:str, thread_results:list[Result], exp
     midi_file   = filename("midi")
     wav_file    = filename("wav")
 
-    # GPT-4に問う
-    answer = ask(client, system_prompt, user_prompt)
+    # Gemini-1.5-proに問う
+    answer = ask_gemini_pro(MODEL_NAME, system_prompt, user_prompt)
     makedirs(answer_file.parent, exist_ok=True)
     with open(answer_file, mode='w') as f:
         f.write(answer)
@@ -113,7 +87,7 @@ def write_error_log(exp_name:str, thread_results:list[Result]):
     return perfect_cases_count, success_cases_count
 
 def do_experiment():
-    client = get_client()
+    client = set_gemini_API_Key()
 
     phase_count = 0
     for (exp_name, prompt) in load_prompts():
@@ -131,7 +105,7 @@ def do_experiment():
                 trial_no = wave * NUM_THREAD + thread_no
                 thread = Thread(
                     target=generate_music,
-                    args=(client, exp_name, thread_results, trial_no, prompt, USER_PROMPT)
+                    args=(exp_name, thread_results, trial_no, prompt, USER_PROMPT)
                 )
                 thread.start()
                 threads.append(thread)
