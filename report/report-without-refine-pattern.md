@@ -6,6 +6,11 @@
 
 - input user prompt: `Please compose a rainy day music.`
 
+| model name          | perfect | success | generated count |
+|---------------------|---------|---------|-----------------|
+| gpt-4o-2024-05-13   | 64      | 98      | 100             |
+
+
 | model name | perfect | success | generated count | 
 |---|---|---|---|
 | gpt-4o-2024-05-13 | 13 | 19 | 20 |
@@ -19,6 +24,13 @@
 ## second_trial
 
 - input user prompt: `Please compose a sunny day music.`
+
+| model name             | perfect | success | generated count |
+|------------------------|---------|---------|-----------------|
+| gpt-3.5-turbo-0125     | 23      | 39      | 40              |
+| gpt-4-0613             | 22      | 39      | 40              |
+| gpt-4-turbo-2024-04-09 | 32      | 36      | 40              |
+
 
 | model name | perfect | success | generated count | 
 |---|---|---|---|

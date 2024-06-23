@@ -3,6 +3,17 @@
 - Tempareture: `1.0`
 - input user prompt: `Please compose a sunny day music.`
 
+## summary
+
+| testcase name          | perfect | success | generated count |
+|------------------------|---------|---------|-----------------|
+| without_piano          | 41      | 87      | 100             |
+| without_examples       | 22      | 63      | 100             |
+| with_guitar            | 38      | 86      | 100             |
+| without_guideline      | 51      | 69      | 100             |
+| without_refine_pattern | 73      | 92      | 100             |
+
+
 ## first_trial
 
 | testcase name | perfect | success | generated count | 
