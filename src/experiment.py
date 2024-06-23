@@ -8,11 +8,10 @@ from pathlib import Path
 from time import sleep
 
 from abc2audio import abc2wav
-from prompt2abc import extract_abc_score
+from answer2abc import extract_abc_score
 from Result import Result, ResultOK
 
 # パラメータ群
-## GPT-4-turbo-
 MODEL_NAME = "gpt-4-turbo-2024-04-09"
 TEMPARATURE = 1.0
 NUM_TRIALS = 40
