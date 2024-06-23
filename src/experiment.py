@@ -11,12 +11,11 @@ from abc2audio import abc2wav
 from answer2abc import extract_abc_score
 from Result import Result, ResultOK
 
-from gemini import set_gemini_API_Key, ask_gemini_pro
 
 # パラメータ群
 MODEL_NAME = "gpt-4-turbo-2024-04-09"
 TEMPARATURE = 1.0
-NUM_TRIALS = 40
+NUM_TRIALS = 60
 NUM_THREAD = 10
 USER_PROMPT = "Please compose a rainy day music."
 
