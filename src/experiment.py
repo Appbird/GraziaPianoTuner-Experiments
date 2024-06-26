@@ -7,9 +7,9 @@ from pathlib import Path
 
 from time import sleep
 
-from abc2audio import abc2wav
-from answer2abc import extract_abc_score
-from Result import Result, ResultOK
+from conversion.abc2audio import abc2wav
+from conversion.answer2abc import extract_abc_score
+from utility.Result import Result, ResultOK
 
 
 # パラメータ群

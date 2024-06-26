@@ -1,7 +1,7 @@
 import subprocess
 import sys
 from pathlib import Path
-from Result import Result, ProcessState, ResultOK
+from utility.Result import Result, ProcessState, ResultOK
 
 
 def write_midi_from_abc(abc_file_path:str, midi_file_path:str) -> Result:

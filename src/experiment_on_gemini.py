@@ -6,11 +6,11 @@ from pathlib import Path
 
 from time import sleep
 
-from abc2audio import abc2wav
-from answer2abc import extract_abc_score
-from Result import Result, ResultOK
+from conversion.abc2audio import abc2wav
+from conversion.answer2abc import extract_abc_score
+from utility.Result import Result, ResultOK
 
-from gemini import set_gemini_API_Key, ask_gemini_pro
+from llm_api.gemini import set_gemini_API_Key, ask_gemini_pro
 
 # パラメータ群
 MODEL_NAME = 'gemini-1.5-pro-001'

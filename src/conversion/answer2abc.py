@@ -1,7 +1,7 @@
 import re
 from typing import Tuple
 from fractions import Fraction
-from Result import Result, ProcessState, ResultOK
+from utility.Result import Result, ProcessState, ResultOK
 
 #TODO test this function
 def extract_abc_score(response:str) -> tuple[Result, str]:
