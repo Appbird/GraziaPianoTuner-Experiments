@@ -15,7 +15,7 @@ from utility.Result import Result, ResultOK
 # パラメータ群
 MODEL_NAME = "gpt-4-turbo-2024-04-09"
 TEMPARATURE = 1.0
-NUM_TRIALS = 60
+NUM_TRIALS = 10
 NUM_THREAD = 10
 USER_PROMPT = "Please compose a rainy day music."
 
@@ -117,6 +117,9 @@ def do_experiment():
     phase_count = 0
     for (exp_name, prompt) in load_prompts():
         print(f"[INFO] starts {exp_name}.")
+        # 本来、ここは`[ResultOK() for _ in range(NUM_TRIALS)]`を用いて初期化するべきである。
+        # 下のコードの書き方だと、ある一つオブジェクトへの参照が全ての配列に入ってしまっているという状況になっている。
+        # しかし、今回の場合、配列の各要素に新しいResultインスタンスが上書きされて、元々のオブジェクトの参照が消えているために、スレッドセーフになっている。
         thread_results:list[Result] = [ResultOK()] * NUM_TRIALS
 
         assert NUM_TRIALS % NUM_THREAD == 0

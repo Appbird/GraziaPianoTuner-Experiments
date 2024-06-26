@@ -1,8 +1,8 @@
 #!python3.12
 from os import makedirs
 import sys
-from answer2abc import extract_abc_score
-from abc2audio import abc2wav
+from .answer2abc import extract_abc_score
+from .abc2audio import abc2wav
 from pathlib import Path
 from utility.Result import Result
 from utility.paths import filename
@@ -43,4 +43,4 @@ def answer2audio(answer_file:Path) -> Result:
 
 if __name__ == "__main__":
     path = Path(sys.argv[1])
-    answer2audio(path)
+    print(answer2audio(path).encode())

@@ -21,18 +21,12 @@ def load_prompts() -> list[tuple[str, str]]:
 
 def load_best_prompt() -> str:
     """
-    ./promptsフォルダにあるプロンプトをリストにして返す。
-    # returns
-    `load_prompts()[i] = (x, y)`
-    `i`番目にあったファイルの名前が`x`であり、その中身が`y`であった。
-    ただし、`_`から始まるファイルは無視する。
+    "without_refine_pattern"のプロンプトを読み込む。
     """
-    result:list[tuple[str, str]] = []
     filename = "prompts/without_refine_pattern.txt"
     # リストとしてpromptsフォルダの中にあるテキストファイルを全て列挙したい
     with open(filename) as f:
-        result.append((Path(filename).stem, f.read()))
-    return result
+        return f.read()
 
 if __name__ == "__main__":
     print(load_prompts())

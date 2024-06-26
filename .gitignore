@@ -4,5 +4,6 @@ sf2/**
 *.wav
 credential/*
 result/gpt-4o/*
+result-adj/**
 *.pyc
 result/**
