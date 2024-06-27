@@ -14,25 +14,18 @@ from utility.error_logs import write_error_log
 from utility.load_prompts import load_best_prompt
 
 # パラメータ群
+## APIへのリクエストについて
 MODEL_NAME = "gpt-4o-2024-05-13"
 TEMPARATURE = 1.0
-NUM_TRIALS = 2
+NUM_TRIALS = 1
 SLEEP_SEC = 10
 
-initial_music = ""
-#TODO 元楽曲を読み込ませて編集するようにしちゃう？
+## 概念パラメータの入力について
+from conceptual_parameters.set_diatonic import *
 
-def gen_user_prompt(adj:str, value:float):
-    assert 0 <= value <= 1
-    return f"""
-# parameters
-parameters' range is from 0 to 1.
-{adj}: {value}
-"""
-
-adj_list    = {"明るさ", "躍動感"}
-param_list  = {0, 1.0}
-all_pattern_count = len(adj_list) * len(param_list) * NUM_TRIALS
+## 制約
+assert all([len(adj) == len(param) for adj, param in zip(ADJ_LIST, PARAM_LIST)])
+all_pattern_count = len(ADJ_LIST) * len(PARAM_LIST) * NUM_TRIALS
 
 def generate_music(
         client:OpenAI, result_dst_file:Path,
@@ -55,13 +48,14 @@ def do_experiment():
     dt_now_title = datetime.now().strftime("%Y%m%d_%H%M%S")
     dst_timestamp_folder = Path.cwd()/"result-adj"/(dt_now_title)
     # いくつかのwaveに分けて問い合わせを分散する。
-    for adj in adj_list:
+    for adj in ADJ_LIST:
         threads:list[Thread] = []
+        dst_adj_name = "-".join(adj)
         print(f"[INFO] starts wave {adj}.")
         
-        for (param, trial) in itertools.product(param_list, range(NUM_TRIALS)):
+        for (param, trial) in itertools.product(PARAM_LIST, range(NUM_TRIALS)):
             
-            dst = dst_timestamp_folder/adj/f"trial{trial}-{str(param)}.ans"
+            dst = dst_timestamp_folder/dst_adj_name/f"trial{trial}-{str(param)}.ans"
             thread_results[trial_no].give_casename(f"{adj} at {str(param)} - {trial}")
 
             makedirs(dst.parent, exist_ok=True)
