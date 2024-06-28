@@ -21,7 +21,7 @@ NUM_TRIALS = 1
 SLEEP_SEC = 10
 
 ## 概念パラメータの入力について
-from conceptual_parameters.set_diatonic import *
+from conceptual_parameters.set_toruko import *
 
 ## 制約
 assert all([len(adj) == len(param) for adj, param in zip(ADJ_LIST, PARAM_LIST)])
