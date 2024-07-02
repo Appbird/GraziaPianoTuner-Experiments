@@ -5,16 +5,18 @@ MAX_VALUE = 1
 ADJ_LIST    :list[list[str]] = [
     ["厳かな"],
     ["気まぐれな"],
-    ["強さ"],
-    ["勇敢な"],
+    ["明るさ"],
     ["春"],
-    ["夏"],
+
     ["ジャズ感"],
-    ["クラシック感"],
+    ["沈んだ"],
+    ["勇敢な"],
+    ["静かな"],
+    
+    ["クラシック"],
+    ["堂々とした"],
     ["スイング感"],
-    ["神秘さ"],
-    ["躍動感"],
-    ["癒し"]
+    ["ベース"]
 ]
 PARAM_LIST  :list[list[float]]  = [
     [ MIN_VALUE ],
@@ -27,12 +29,12 @@ def gen_user_prompt(adjs:list[str], values:list[float]):
     assert all(MIN_VALUE <= value <= MAX_VALUE for value in values)
     return f"""
 # Input
-Firstly, please evaluate the parameter ("{"\",\"".join(adjs)}") on following music.
-Then, please modify the melody of the following music to match the parameters given in the #parameter section.
+Firstly, please evaluate the parameter ("{"\",\"".join(adjs)}") on following music, and report it.
+Then, please modify the melody of the following music to match the parameters' value given in the #parameter section.
 Feel free to change the chords, key, rhythm, and BPM as necessary.
 
 The range of the parameter is the closed interval from {MIN_VALUE} to {MAX_VALUE}.
-
+        
 ```
 X:1
 T:Lively Serenade
