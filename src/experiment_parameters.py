@@ -17,11 +17,11 @@ from utility.load_prompts import load_best_prompt
 ## APIへのリクエストについて
 MODEL_NAME = "gpt-4o-2024-05-13"
 TEMPARATURE = 1.0
-NUM_TRIALS = 3
+NUM_TRIALS = 5
 SLEEP_SEC = 10
 
 ## 概念パラメータの入力について
-from conceptual_parameters.set_tests import *
+from conceptual_parameters.set_additional_test import *
 
 ## 制約
 assert all([len(adj) == len(param) for adj, param in zip(ADJ_LIST, PARAM_LIST)])
