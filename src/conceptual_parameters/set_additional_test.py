@@ -3,12 +3,7 @@ MAX_VALUE = 1
 
 
 ADJ_LIST    :list[list[str]] = [
-    ["クラシック"],
-    ["スイング感"],
-    ["ジャズ感"],
-    ["静かな"],
-    ["沈んだ"],
-    ["静かな"],
+    ["騒がしさ"]
 ]
 PARAM_LIST  :list[list[float]]  = [
     [ MIN_VALUE ],
