@@ -8,3 +8,4 @@ result-adj/**
 result-mod/**
 *.pyc
 result/**
+*.csv
