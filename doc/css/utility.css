@@ -1,0 +1,114 @@
+.u-center {
+    display: flex;
+    justify-content: center;
+}
+.u-center.column {
+    flex-direction: column;
+    justify-content: center;
+}
+.u-strong {
+    font-weight: bold;
+    color: #c61801;
+    text-decoration: underline;
+}
+.u-margin20 {
+    margin-top: 1.0em;
+    margin-bottom: 1.0em;
+}
+
+.u-pagetitle {
+    font-size: 4.0rem;
+    padding-top: 1.0em;
+}
+
+p.u-center {
+    text-align: center;
+}
+
+header {
+    background-color: #407e40;
+    color: #e3eae2;
+}
+body {
+    background-color: #fafffa;
+    color: #446240;
+    font-family: "Noto Sans JP", serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size:1.8em;
+}
+header .u-subtle {
+    font-family: "Noto Sans JP", serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    color: #c2d1c0;
+}
+
+h1 {
+    font-size: 3.0rem; padding-top: 1.0em;
+    font-family: "Noto Sans JP", serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+}
+h2 {
+    text-align:center;
+    font-size: 2.4rem;
+    padding-top: 0.5em;
+    margin-bottom: 0.5em;
+    position:relative;
+    font-weight: 500;
+    
+}
+h2::after {
+    content: "";
+    margin: 0 auto;
+    display: block;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    
+    background: #4b924b;
+}
+h3 {
+    font-size: 1.8rem;
+    padding-top: 0.3em;
+    padding-left: 0.5em;
+    position:relative;
+    font-weight: 400;
+}
+h3::before {
+    content: "";
+    margin: 0 auto;
+    display: block;
+    width:3px;
+    height:1.5em;
+    position:absolute;
+    top:0.2em;
+    left:-5px;
+    background: #9deb9d; 
+}
+h4 { font-size: 1.5rem; padding-top: 0.3em;}
+
+
+img {
+    width: 80%;
+}
+
+img.u-icon {
+    max-width: 15em;
+    border-radius: 100%;
+    border-color: #bfeae7;
+    border-width: 3px;
+    border-style: solid;
+    padding: 1em;
+    width: 30%;
+    min-width: 150px;
+}
+
+.u-footnote {
+    color: rgb(173, 173, 173);
+    font-size: 0.9em;
+}
+.u-gray {
+    color: gray;
+}

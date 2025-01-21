@@ -13,11 +13,11 @@ from utility.Result import Result, ResultOK
 
 
 # パラメータ群
-MODEL_NAME = "gpt-4-turbo-2024-04-09"
+MODEL_NAME = "gpt-4o-mini-2024-07-18"
 TEMPARATURE = 1.0
-NUM_TRIALS = 10
+NUM_TRIALS = 100
 NUM_THREAD = 10
-USER_PROMPT = "Please compose a rainy day music."
+USER_PROMPT = "Please compose a sunny day music."
 
 # クライアントオブジェクトを作る。これを作らないとAPIへの問い合わせができない。
 # ターミナルのカレントディレクトリから見て、`./src/credential/OPEN_AI_KEY.txt`に記述されているAPIキーを読み取って実行します。

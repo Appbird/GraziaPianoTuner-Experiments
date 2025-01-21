@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/utility.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大規模言語モデルを用いた作編曲システムにおけるカスタマイズ可能なパラメータ制御</title>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <h1 class="u-pagetitle">大規模言語モデルを用いた作編曲システムにおける<br>カスタマイズ可能なパラメータ制御</h1>
+            <p class="u-subtle">Implementation of Customizable Parameter Control for Music Editing Using Large Language
+                Models</p>
+            <ul>
+                <li>川口 竜斉 (関西学院大学)</li>
+                <p class="u-subtle">Ryosei Kawaguchi (Kwansei Gakuin University)</p>
+                <li>片寄 晴弘 (関西学院大学)</li>
+                <p class="u-subtle">Haruhiro Katayose (Kwansei Gakuin University)</p>
+            </ul>
+        </div>
+    </header>
+    <div class="container">
+        <div class="row">
+
+            <div class="u-center u-margin20">
+            </div>
+            <section>
+                <h2>概要</h2>
+                <iframe width="100%" height="500" src="https://www.youtube.com/embed/Zk99iQE-TxE?si=qduQ0qIHPBLHdHmD"
+                    title="YouTube video player" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <ul>
+                    音楽作編曲システムでユーザの意図を正確に反映した作品を作るために，ユーザからのフィードバックを受けて作品を改良する
+                    「<span
+                        class="u-strong">Human-in-the-loop</span>」の枠組みが注目されている。その中で課題となるのが，ユーザがシステムへ指示を与えるためのインタフェースである。
+                    代表的なアプローチにパラメータ制御が挙げられるが，現状ではユーザがパラメータを自由に設定できないという制約がある。
+                    本稿では，<span class="u-strong">ユーザがパラメータを任意に設定できる「可変概念パラメータ」</span>を提案する。また，その実装に向けて大規模言語モデル（LLM）を
+                    プロンプトエンジニアリングによって調整する手法を検討した。評価の結果，明暗やテンポに関連する制御では安定した操作が可能である一方，
+                    パラメータ調整の精度や限界値の取り扱いといった課題が明らかとなり，モデル性能やインタフェース設計にさらなる改善の必要性が示された。
+                </ul>
+            </section>
+
+            <section>
+                <h2>可変概念パラメータとその修正例</h2>
+                <p>
+                    可変概念パラメータは、楽曲の調節したい雰囲気（例: 明るさ・ジャズ感）をテキスト形式で指定し、その強度を数値で設定できるインタフェースである。
+                </p>
+                <div class="u-center">
+                    <img src="img/system.png">
+                </div>
+                <div class="u-center">
+                    <p>図1. システムの構成図</p>
+                </div>
+                <div class="u-center">
+                    <img src="img/screenshot.png">
+                </div>
+                <div class="u-center">
+                    <p>図2. ユーザインタフェース</p>
+                </div>
+                <h3>修正対象とする楽曲</h3>
+                <div class="u-center">
+                    <audio controls>
+                        <source src="music/before.mp3" type="audio/mpeg">
+                    </audio>
+                </div>
+                
+                <h3>修正例</h3>
+
+                <table class="u-full-width">
+                    <thead>
+                        <tr>
+                            <th>軸の名前</th>
+                            <th>0</th>
+                            <th>0.5</th>
+                            <th>1</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            
+                    <tr>
+                        <td><code>春</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/spring-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/spring-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/spring-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>明るさ</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brightness-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brightness-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brightness-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>厳かな</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/solemn-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/solemn-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/solemn-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>気まぐれな</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/capricious-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/capricious-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/capricious-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>勇敢な(case 1)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brave1-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brave1-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brave1-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>勇敢な(case 2)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brave2-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brave2-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/brave2-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>堂々とした(case 1)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/dignified1-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/dignified1-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/dignified1-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>堂々とした(case 2)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/dignified2-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/dignified2-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/dignified2-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>静かな</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/quiet-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/quiet-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/quiet-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>沈んだ</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/sank-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/sank-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/sank-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>クラシック感(case 1)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/classic1-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/classic1-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/classic1-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>クラシック感(case 2)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/classic2-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/classic2-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/classic2-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>ジャズ感(case 1)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/jazz1-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/jazz1-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/jazz1-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>ジャズ感(case 2)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/jazz2-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/jazz2-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/jazz2-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>スイング感(case 1)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/swing1-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/swing1-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/swing1-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    <tr>
+                        <td><code>スイング感(case 2)</code></td>
+                        <td>
+                            <audio controls>
+                                <source src="music/swing2-00.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/swing2-05.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                        <td>
+                            <audio controls>
+                                <source src="music/swing2-10.mp3" type="audio/mpeg">
+                            </audio>
+                        </td>
+                    </tr>
+                
+                    </tbody>
+                </table>
+
+
+                <section>
+                    <h2>LLMに楽曲を記述させるために</h2>
+                    <p>
+                        本研究では、比較的安定して楽曲を記述できるLLMとして<strong>GPT-4o-2024-05-13</strong> を使用する。
+                        ただし、楽曲の記述が十分には安定しないため、プロンプトエンジニアリングを通じて生成の安定性を向上させる手法を検討した。
+                    </p>
+                    <p>
+                        本研究では、有効と思われた以下の四つの工夫を検討し、これらの有効性をAblation Studyの形式で調査した。
+                    </p>
+                    <ul>
+                        <li><strong>ruleset:</strong> 確認された出力誤りを列挙し、それらを抑制するように指示する。</li>
+                        <li><strong>instrument:</strong> 楽曲がどの楽器で演奏されるかを明示する。本研究ではピアノ演奏を指定。</li>
+                        <ul>
+                            <li>（楽器を変更しても生成傾向に変化は見られなかった）</li>
+                        </ul>
+                        <li><strong>examples:</strong> 生成されるべき楽曲の具体例をプロンプトに含める。</li>
+                        <li><strong>refine-pattern:</strong> 出力された楽曲を見直し、誤りを訂正する指示を含める。</li>
+                    </ul>
+
+                    <h3>比較対象と評価設定</h3>
+                    <p>以下の6種類のプロンプトを用意し、各プロンプトを100回使用して楽曲を生成しました。</p>
+                    <ol>
+                        <li>
+                            <strong>工夫なしプロンプト:</strong>
+                            <a href="https://github.com/Appbird/GraziaPianoTuner-Experiments/blob/main/prompts/_simple.txt"
+                                target="_blank">
+                                プロンプトの例
+                            </a>
+                        </li>
+                        <li>
+                            <strong>すべての工夫を適用したプロンプト:</strong>
+                            <a href="https://github.com/Appbird/GraziaPianoTuner-Experiments/blob/main/prompts/_complex.txt"
+                                target="_blank">
+                                プロンプトの例
+                            </a>
+                        </li>
+                        <li>
+                            <strong>rulesetを適用しないプロンプト:</strong>
+                            <a href="https://github.com/Appbird/GraziaPianoTuner-Experiments/blob/main/prompts/_without_guideline.txt"
+                                target="_blank">
+                                プロンプトの例
+                            </a>
+                        </li>
+                        <li>
+                            <strong>instrumentを適用しないプロンプト:</strong>
+                            <a href="https://github.com/Appbird/GraziaPianoTuner-Experiments/blob/main/prompts/_without_piano.txt"
+                                target="_blank">
+                                プロンプトの例
+                            </a>
+                        </li>
+                        <li>
+                            <strong>examplesを適用しないプロンプト:</strong>
+                            <a href="https://github.com/Appbird/GraziaPianoTuner-Experiments/blob/main/prompts/_without_examples.txt"
+                                target="_blank">
+                                プロンプトの例
+                            </a>
+                        </li>
+                        <li>
+                            <strong>refine-patternを適用しないプロンプト:</strong>
+                            <a href="https://github.com/Appbird/GraziaPianoTuner-Experiments/blob/main/prompts/without_refine_pattern.txt"
+                                target="_blank">
+                                プロンプトの例
+                            </a>
+                        </li>
+                    </ol>
+
+                    <h3>評価指標</h3>
+                    <p>
+                        楽曲生成結果の評価は、コンパイラ <strong>abc2midi</strong> を用いて、以下の2種類の成功率を定義しました。
+                    </p>
+                    <ul>
+                        <li><strong>success値:</strong> abc2midiのコンパイルでエラーが出なかった試行数。エラーはABC形式の文法ミスで発生する。</li>
+                        <li><strong>perfect値:</strong> abc2midiのコンパイルで警告が出なかった試行数。警告の多くは、拍子と一小節内の音価の不一致に起因する。</li>
+                    </ul>
+
+                    <h3>結果</h3>
+                    <table class="u-full-width">
+                        <thead>
+                            <tr>
+                                <th>LLMに与えたプロンプト</th>
+                                <th>perfect</th>
+                                <th>success</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>工夫なし</td>
+                                <td>30</td>
+                                <td>73</td>
+                            </tr>
+                            <tr>
+                                <td>すべての工夫を適用</td>
+                                <td>41</td>
+                                <td>87</td>
+                            </tr>
+                            <tr>
+                                <td>rulesetを適用しない</td>
+                                <td>51</td>
+                                <td>69</td>
+                            </tr>
+                            <tr>
+                                <td>instrumentを適用しない</td>
+                                <td>41</td>
+                                <td>87</td>
+                            </tr>
+                            <tr>
+                                <td>examplesを適用しない</td>
+                                <td>22</td>
+                                <td>63</td>
+                            </tr>
+                            <tr>
+                                <td>refine-patternを適用しない</td>
+                                <td>73</td>
+                                <td>92</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>
+                        以上の結果を踏まえ、本研究では <strong>refine-patternを適用しないプロンプト</strong> を採用しています。
+                    </p>
+
+                </section>
+
+                <section>
+                    <h2>その他詳細</h2>
+                    <h3>使用ツール</h3>
+                    <p>音響信号へのレンダリングには以下のツールを用いました。</p>
+                    <ul>
+                        <li>abc2midi ver 4.93</li>
+                        <li>fluidsynth ver 2.3.4</li>
+                        <li>サウンドフォント: <a href="https://schristiancollins.com/generaluser.php">GeneralUser GS 1.471</a>
+                        </li>
+                    </ul>
+                </section>
+        </div>
+    </div>
+</body>
+
+</html>
