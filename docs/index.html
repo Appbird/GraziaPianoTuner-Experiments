@@ -28,20 +28,22 @@
                 <li>片寄 晴弘 (関西学院大学)</li>
                 <p class="u-subtle">Haruhiro Katayose (Kwansei Gakuin University)</p>
             </ul>
+
         </div>
     </header>
     <div class="container">
         <div class="row">
-
-            <div class="u-center u-margin20">
-            </div>
+            <section>
+                <h2>論文</h2>
+                <li>情報処理学会 一般号 査読中</li>
+            </section>
             <section>
                 <h2>概要</h2>
                 <iframe width="100%" height="500" src="https://www.youtube.com/embed/Zk99iQE-TxE?si=qduQ0qIHPBLHdHmD"
                     title="YouTube video player" frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                <ul>
+                <p>
                     音楽作編曲システムでユーザの意図を正確に反映した作品を作るために，ユーザからのフィードバックを受けて作品を改良する
                     「<span
                         class="u-strong">Human-in-the-loop</span>」の枠組みが注目されている。その中で課題となるのが，ユーザがシステムへ指示を与えるためのインタフェースである。
@@ -49,7 +51,20 @@
                     本稿では，<span class="u-strong">ユーザがパラメータを任意に設定できる「可変概念パラメータ」</span>を提案する。また，その実装に向けて大規模言語モデル（LLM）を
                     プロンプトエンジニアリングによって調整する手法を検討した。評価の結果，明暗やテンポに関連する制御では安定した操作が可能である一方，
                     パラメータ調整の精度や限界値の取り扱いといった課題が明らかとなり，モデル性能やインタフェース設計にさらなる改善の必要性が示された。
-                </ul>
+                </p>
+                <p class="u-subtle">
+                    To reflect user intentions in music generation AI, the "Human-in-the-loop" framework,
+	which iteratively improves outputs based on user feedback, has gained attention.
+	One of the challenges lies in the interface through which users provide instructions to the system.
+	One common approach is parameter control, but traditional methods have the limitation that
+	users cannot freely define the meaning of parameters.
+	In this study, we propose "Customizable Semantic Parameters,"
+	which allow users to define control targets arbitrarily. For its implementation,
+	we employed a method that adjusts large language models (LLMs) through prompt engineering. 
+	The evaluation showed that specific controls, such as brightness and tempo, were stable,
+	but challenges related to adjustment precision and handling of parameter limits were identified.
+	This highlights the need for further improvements in model performance and interface design.
+                </p>
             </section>
 
             <section>
@@ -516,7 +531,7 @@
                     </table>
 
                     <p>
-                        以上の結果を踏まえ、本研究では <strong>refine-patternを適用しないプロンプト</strong> を採用しています。
+                        以上の結果を踏まえ、本提案システムでは <strong>refine-patternを適用しないプロンプト</strong> を採用している。
                     </p>
 
                 </section>

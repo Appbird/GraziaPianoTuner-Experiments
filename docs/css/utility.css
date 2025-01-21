@@ -20,13 +20,17 @@
     font-size: 4.0rem;
     padding-top: 1.0em;
 }
+.u-subtle {
+    color: #8b9c89;
+    font-size:0.8em;
+}
 
 p.u-center {
     text-align: center;
 }
 
 header {
-    background-color: #407e40;
+    background-color: #2f4d2f;
     color: #e3eae2;
 }
 body {
@@ -38,10 +42,8 @@ body {
     font-size:1.8em;
 }
 header .u-subtle {
-    font-family: "Noto Sans JP", serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
     color: #c2d1c0;
+    font-size:0.8em;
 }
 
 h1 {
