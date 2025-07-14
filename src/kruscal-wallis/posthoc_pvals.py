@@ -78,12 +78,12 @@ def main():
 
         # --- 5. スペクトラルクラスタリング ---
         sc = SpectralClustering(
-            n_clusters=3,
+            n_clusters=4,
             affinity='precomputed',
             random_state=10
         )
         labels = sc.fit_predict(smilarity.values)
-        for k in range(3):
+        for k in range(4):
             members = [cols[i] for i, lbl in enumerate(labels) if lbl == k]
             print(f"Cluster{k+1}: {members}")
         
@@ -134,6 +134,10 @@ def draw_directed_graph(G, labels, cols_en):
                            width=edge_widths,
                            edge_color=edge_colors,
                            connectionstyle='arc3,rad=0.1')
+    # 7) ノードラベル描画
+    nx.draw_networkx_labels(G, pos, ax=ax,
+                            labels={i: cols_en[i] for i in G.nodes()},
+                            font_size=10)
     
     # 8) カラーバー追加（Greyscale for weight）
     sm = plt.cm.ScalarMappable(cmap=cmap_edges, norm=norm)
