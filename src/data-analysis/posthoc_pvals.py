@@ -11,14 +11,14 @@ import matplotlib.cm as cm
 
 def main():
     # --- 1. データ読み込み & 列抽出 ---
-    csv_file_path = 'src/kruscal-wallis/questionaires.csv'
+    csv_file_path = 'questionaire/subjective_questionaire.csv'
     df = pd.read_csv(csv_file_path)
 
     cols = [
         # '春',
         '明るさ', '気まぐれな', '厳かな',
-        '勇敢な（1つめ）', '勇敢な（2つめ）',
-        '堂々とした（1つめ）', '堂々とした（2つめ）',
+        '勇敢な1', '勇敢な2',
+        '堂々とした1', '堂々とした2',
         '静かな', '沈んだ',
         #"クラシック感（1つめ）", "クラシック感（2つめ）",
         #"ジャズ感（1つめ）", "ジャズ感（2つめ）",

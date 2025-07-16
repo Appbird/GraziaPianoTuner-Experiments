@@ -3,22 +3,23 @@ from scipy.stats import kruskal, mannwhitneyu
 import numpy as np
 
 # CSVファイルを読み込む
-csv_file_path = 'src/kruscal-wallis/questionaires.csv'
+csv_file_path = 'questionaire/subjective_questionaire.csv'
 # csv_file_path = 'src/kruscal-wallis/sample_data.csv'
 df = pd.read_csv(csv_file_path)
 
 # 群と対応するカラムのリストを指定
 groups = {
-    'Group-A': ['明るさ', "沈んだ"],
-    # 'Group-A': ["ジャズ感（1つめ）","ジャズ感（2つめ）"],
-    # 'Group-B': [ "スイング感（1つめ）", "スイング感（2つめ）" ],
-    # 'Group-B': ["クラシック感（1つめ）", "クラシック感（2つめ）"]
+    # 'Group-A': ['明るさ'],
+    #'Group-A': ["ジャズ感1","ジャズ感2"],
+    'Group-A': [ "スイング感1", "スイング感2" ],
+    'Group-B': ["クラシック感1", "クラシック感2"]
+    'Group-A': ["ジャズ感1","ジャズ感2"],
+    'Group-A': [ "スイング感1", "スイング感2" ],
+    'Group-B': ["クラシック感1", "クラシック感2"]
     # 'Group-B': ["勇敢な（1つめ）", "勇敢な（2つめ）", "気まぐれな"]
-    "Group-B": ["厳かな", "勇敢な（1つめ）",  "勇敢な（2つめ）", "堂々とした（1つめ）", "堂々とした（2つめ）", "気まぐれな"],
+    # "Group-B": ["勇敢な1",  "勇敢な2", "ジャズ感1", "ジャズ感2", "クラシック感2", "堂々とした2", "気まぐれな", "沈んだ"],
 
-    # 'Group-A': ['Column1', 'Column2'],
-    # 'Group-B': ['Column3', 'Column4'],
-    # 'Group-C': ['堂々とした（1つめ）', '堂々とした（2つめ）', '静かな']
+    # 'Group-B': ['厳かな']
 }
 # 春,明るさ,気まぐれな,厳かな,勇敢な（1つめ）,勇敢な（2つめ）,堂々とした（1つめ）,堂々とした（2つめ）,静かな,沈んだ,
 # クラシック感（1つめ）,クラシック感（2つめ）,ジャズ感（1つめ）,ジャズ感（2つめ）,スイング感（1つめ）,スイング感（2つめ）
