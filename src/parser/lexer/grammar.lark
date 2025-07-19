@@ -1,0 +1,44 @@
+?start: line+
+?line: (header_line|measure_line)? "\n"
+
+HEADER_FIELD: /[A-Za-z]/
+HEADER_VALUE: /[^:\n]+/
+header_line: HEADER_FIELD ":" HEADER_VALUE? -> header_line
+
+BARLINE: /\|+/
+measure_line: BARLINE? measure (BARLINE measure)* BARLINE?  -> measure_line
+measure: (chord | broken_pair | atom)+
+broken_pair: atom BROKEN atom        -> broken
+?atom: note | rest
+
+// Note and Rest
+ACC: /(\^{1,2}|_{1,2}|=)+/
+PITCH: /[A-Ga-g]/
+OCT: /['\,]+/
+BROKEN: /(>{1,3}|<{1,3})/
+FSLASH: "/"
+INT: /\d+/
+note: ACC? PITCH OCT? duration?     -> note_raw
+rest: "z" duration?                 -> rest_raw
+    duration: part+
+        part: INT FSLASH INT        -> part_frac_full      // 3/4
+            | INT FSLASH            -> part_frac_missing_den // 3/
+            | FSLASH INT            -> part_frac_missing_num // /3
+            | INT                   -> part_int // 3
+            | FSLASH+               -> part_slashes // / , // , ///  (1/2^n 表現用) 
+
+// Chord
+CHORD_QUOTE: "\""
+ACC_SYM: /[#b♭♯♮]/
+NOTE_LETTER: /[A-Ga-g]/
+CHORD_TYPE_TOKEN: /[^\/()" \t\n]+/
+?chord: CHORD_QUOTE chord_body CHORD_QUOTE      -> chord
+chord_body: chord_core alternate_chord*      
+    alternate_chord: "(" chord_core ")"         -> chord_alt
+        chord_core: chord_root chord_type? slash_bass?  -> chord_core
+            chord_root: NOTE_LETTER ACC_SYM?            -> chord_root
+            chord_type: CHORD_TYPE_TOKEN+               -> chord_type
+            slash_bass: "/" bass_note                   -> slash_bass
+                bass_note: NOTE_LETTER ACC_SYM?         -> bass_note
+
+%ignore /[ \t]+/
