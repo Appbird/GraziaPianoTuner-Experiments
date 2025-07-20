@@ -1,7 +1,11 @@
 sf2/**
 .DS_Store
-*.mid
-*.wav
+data/**/*.mid
+data/**/*.midi
+data/**/*.log
+data/**/*.wav
+data/**/*.abc
+data/**/*.ans
 credential/*
 result/gpt-4o/*
 result-adj/**

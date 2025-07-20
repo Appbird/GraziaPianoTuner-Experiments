@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fractions import Fraction
 from typing import Optional
 from parser.key import ParsedKey, parse_k_field
@@ -29,10 +29,10 @@ def parse_L(l_field: str) -> Fraction:
 
 @dataclass
 class Context:
-    BPM:int
-    L:Fraction
-    M:Fraction
-    Key:Optional[ParsedKey]
+    BPM:int = 0
+    L:Fraction = field(default_factory=Fraction)
+    M:Fraction = field(default_factory=Fraction)
+    Key:Optional[ParsedKey] = None
     def set(self, field_name:str, value:str):
         if field_name == "Q":
             self.BPM = bpm_from_Q(value)
