@@ -1,8 +1,8 @@
 from typing import List, Tuple
 from collections import Counter
 
-from feature.data import HarmonicFeatures, IOIFeatures, IntervalFeatures, PitchFeatures
-from feature.utility import shannon_entropy_counts
+from qualitative.feature.data import HarmonicFeatures, IOIFeatures, IntervalFeatures, PitchFeatures
+from qualitative.feature.utility import shannon_entropy_counts
 from parser.ast.measure_info import MeasureInfo, NoteEvent
 
 def compute_harmonic_features(measures: List[MeasureInfo]) -> HarmonicFeatures:

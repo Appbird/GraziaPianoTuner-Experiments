@@ -22,7 +22,8 @@ class ABCMusicAST(Transformer):
     def line(self, content=None):
         if content is None: return None
         if isinstance(content, HeaderLine): return Line(header=content)
-        return Line(measures=content)
+        elif isinstance(content, MeasureLine): return Line(measures=content)
+        else: return Line()
 
     # ---- Header ----
     def header_line(self, field_tok, value_tok=None):
@@ -101,14 +102,16 @@ class ABCMusicAST(Transformer):
     def chord_core(self, root, ctype=None, bass=None):
         # root_tree: chord_root -> (NOTE_LETTER, ACC?)
         raw_types: List[str] = []
-        if ctype:
+        if ctype and ctype.data == "chord_type":
             # chord_type -> CHORD_TYPE_TOKEN+
             raw_types = [tok.value for tok in ctype.children]
+        elif ctype:
+            bass = ctype
 
         bass_txt = None
         if bass:
             # slash_bass: "/" bass_note
-            bnode = bass.children[1]  # bass_note
+            bnode = bass.children[0]  # bass_note
             bnote = bnode.children[0].value
             bacc = bnode.children[1].value if len(bnode.children) > 1 else ''
             bacc = normalize_accidental_symbol(bacc)
@@ -129,8 +132,8 @@ class ABCMusicAST(Transformer):
         root = root_note + root_acc
         return root
     def chord_type(self, *tokens): return Tree('chord_type', list(tokens))
-    def slash_bass(self, slash_tok, bass_note):
-        return Tree('slash_bass', [slash_tok, bass_note])
+    def slash_bass(self, bass_note):
+        return Tree('slash_bass', [bass_note])
     def bass_note(self, *tokens): return Tree('bass_note', list(tokens))
 
     def slur(self, *atoms):

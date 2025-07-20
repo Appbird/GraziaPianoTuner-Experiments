@@ -1,8 +1,8 @@
 from typing import List
 
-from feature.data import ExtendedGlobalFeatures
-from feature.features import compute_harmonic_features, compute_interval_features, compute_ioi_features, compute_pitch_features
-from feature.preprocess import build_measure_start_positions, collapse_polyphony, collect_note_candidates
+from qualitative.feature.data import ExtendedGlobalFeatures
+from qualitative.feature.features import compute_harmonic_features, compute_interval_features, compute_ioi_features, compute_pitch_features
+from qualitative.feature.preprocess import build_measure_start_positions, collapse_polyphony, collect_note_candidates
 from parser.ast.measure_info import MeasureInfo
 
 # ==== Aggregator ====

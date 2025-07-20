@@ -1,13 +1,15 @@
 start: line+
-line: (header_line|measure_line)? "\n"
+line: (header_line|measure_line|empty_line)? "\n"
+
+empty_line: BARLINE+
 
 HEADER_FIELD: /[A-Za-z]/
 HEADER_VALUE: /[^:\n]+/
 header_line: HEADER_FIELD ":" HEADER_VALUE? -> header_line
 
-BARLINE: /\|+/
+BARLINE: /\[?:*\|:*+\]?/
 measure_line: BARLINE? measure (BARLINE measure)* BARLINE?
-measure: (chord | broken_pair | slur | slur2 | atom)+
+measure: (chord | broken_pair | slur | slur2 | triplet | atom)+
 broken_pair: atom BROKEN atom        -> broken
 slur: "(" atom+ ")"
 slur2: atom ( "-" atom )+

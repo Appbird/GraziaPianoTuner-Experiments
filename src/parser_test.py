@@ -21,8 +21,3 @@ Q: 1/4=150
 tree = abc_parser.parse(text)      # Lark Tree
 # print(tree)
 ast = ABCMusicAST().transform(tree)            # 変換
-c = Context(0, Fraction(0), Fraction(0), None)
-measure_list:list[MeasureInfo] = []
-ast.eval(c, measure_list)
-for m in measure_list:
-    m.dump()

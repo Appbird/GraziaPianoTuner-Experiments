@@ -22,7 +22,7 @@ class ChordSymbol(MeasurePrimitive):
         end_beat = latest.notes[-1].end_beat if len(latest.notes) > 0 else Fraction(0)
         if len(latest.notes) > 0:
             latest.chords[-1].end_beat = end_beat
-        
+        self.raw_types = normalize_chord(self.raw_types)
         chordname = self.root + "".join(self.raw_types)
         if self.bass: chordname += "/" + self.bass
         tones = Chord(chordname).components(False)
@@ -50,3 +50,8 @@ def strict_ceil(x: Fraction) -> Fraction:
     （整数ちょうどなら +1, 端数があれば通常のceilと同じ。）
     """
     return Fraction(x.numerator // x.denominator) + 1
+
+def normalize_chord(chord_types:List[str]):
+    for i, ctype in enumerate(chord_types):
+        chord_types[i] = ctype.replace("♯", "#").replace("♭", "b").replace("♮", "")
+    return chord_types

@@ -1,7 +1,7 @@
 from typing import List, Dict, Tuple
 from fractions import Fraction
 
-from feature.utility import measure_length_in_beats
+from qualitative.feature.utility import measure_length_in_beats
 from parser.ast.measure_info import MeasureInfo, NoteEvent
 
 def build_measure_start_positions(measures: List[MeasureInfo]) -> Dict[int, float]:

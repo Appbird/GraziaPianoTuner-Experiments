@@ -8,6 +8,6 @@ class PromptTemplate:
     def embed(self, variable:dict[str, str]) -> str:
         prompt = self.template
         for key, value in variable.items():
-            prompt = self.template.replace("${"+key+"}", value)
+            prompt = prompt.replace("${"+key+"}", value)
         assert "${" not in prompt
         return prompt
