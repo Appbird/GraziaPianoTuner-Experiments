@@ -4,7 +4,7 @@ from lark import Token, Transformer, Tree, v_args
 
 from parser.ast.chord.chord_symbol import ChordSymbol
 from parser.ast.header import HeaderLine
-from parser.ast.measure import Measure
+from parser.ast.measure import AtomList, BrokenPair, Measure, MeasureLine, Triplet
 from parser.ast.primitive.duration import Duration
 from parser.ast.score import Line, Score
 from parser.ast.primitive.note import Note, Rest
@@ -20,11 +20,8 @@ class ABCMusicAST(Transformer):
         return Score([l for l in lines if l is not None])
 
     def line(self, content=None):
-        if content is None:
-            return None
-        if isinstance(content, HeaderLine):
-            return Line(header=content)
-        # measures_line returns list[Measure]
+        if content is None: return None
+        if isinstance(content, HeaderLine): return Line(header=content)
         return Line(measures=content)
 
     # ---- Header ----
@@ -34,9 +31,9 @@ class ABCMusicAST(Transformer):
         return HeaderLine(field, value)
 
     # ---- Measures line ----
-    def measures_line(self, *children):
+    def measure_line(self, *children):
         measures = [c for c in children if isinstance(c, Measure)]
-        return measures
+        return MeasureLine(measures)
 
     def measure(self, *elems):
         return Measure(list(elems))
@@ -52,12 +49,12 @@ class ABCMusicAST(Transformer):
         octave_marks = None
         if i < len(parts) and isinstance(parts[i], Token) and parts[i].type == "OCT":
             octave_marks = parts[i].value; i += 1
-        duration = parts[i] if i < len(parts) else None
+        duration = parts[i] if i < len(parts) else Duration(Fraction(1))
         midi = compute_midi(acc, pitch, octave_marks)
-        return Note(acc, pitch, octave_marks, duration, midi)
+        return Note(acc, pitch, octave_marks, midi, duration)
 
     def rest_raw(self, duration=None):
-        return Rest(duration)
+        return Rest(duration if duration else Duration(Fraction(1)))
 
     # ---- Duration parts ----
     def duration(self, *parts:Duration):
@@ -84,7 +81,7 @@ class ABCMusicAST(Transformer):
 
     # ---- Broken Pair ----
     def broken(self, left, op_tok, right):
-        return BrokenPair(left, op_tok.value, right)
+        return BrokenPair(left, right, len(op_tok.value), op_tok.value[0] == ">")
 
     # ---- Chord symbols ----
     def chord(self, _open, body, _close):
@@ -135,6 +132,13 @@ class ABCMusicAST(Transformer):
     def slash_bass(self, slash_tok, bass_note):
         return Tree('slash_bass', [slash_tok, bass_note])
     def bass_note(self, *tokens): return Tree('bass_note', list(tokens))
+
+    def slur(self, *atoms):
+        return AtomList(list(atoms))
+    def slur2(self, *atoms):
+        return AtomList(list(atoms))
+    def triplet(self, *atoms):
+        return Triplet(list(atoms))
 
     # ---- Tokens passthrough (needed so they remain Token) ----
     def HEADER_FIELD(self, tok): return tok

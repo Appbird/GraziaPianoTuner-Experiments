@@ -8,7 +8,7 @@ NOTE_TO_PC = {
 def major_diatonic_sets():
     triads = [
         {0,4,7},      # I
-        {0,2,5,9}[:3] if False else {2,5,9},  # ii
+        {2,5,9},  # ii
         {4,7,11},     # iii
         {0,5,9},      # IV
         {2,7,11},     # V
@@ -85,7 +85,7 @@ def is_diatonic_chord(chord: str, key_root: str, mode: str, use_harmonic_in_mino
     rel = chord_pcs_relative_to_key(chord, tonic_pc)
 
     # 3〜4和音のみ対象
-    if len(rel) < 3 or len(rel) > 4:
+    if len(rel) not in {3, 4}:
         return False
 
     if mode == 'major':
@@ -94,7 +94,6 @@ def is_diatonic_chord(chord: str, key_root: str, mode: str, use_harmonic_in_mino
         allowed = minor_diatonic_sets(include_harmonic=use_harmonic_in_minor)
     else:
         raise ValueError("mode must be 'major' or 'minor'.")
-
     return rel in allowed
 
 # --- 使用例 ---

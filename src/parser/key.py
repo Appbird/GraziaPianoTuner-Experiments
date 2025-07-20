@@ -9,6 +9,9 @@ class ParsedKey(TypedDict):
     has_accidentals: bool
     accidentals: list[str]
     original: str
+def dump_parsed_key(key:ParsedKey, indent:int=0):
+    print("\t"*indent, end=""); print(f"Mode={str(key["tonic"])+key["mode"]}, is_major ={key["mode"]=="major"}")
+
 
 _MODE_MAP = {
     "maj": "major",

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from fractions import Fraction
+from typing import Optional
 from parser.key import ParsedKey, parse_k_field
 
 
@@ -23,7 +24,7 @@ def parse_L(l_field: str) -> Fraction:
     例: 1/8 → 0.5 beat, 1/4 → 1.0 beat
     """
     a, b = l_field.split('/')
-    return 4 * Fraction(int(a), int(b))
+    return Fraction(int(a), int(b))
 
 
 @dataclass
@@ -31,7 +32,7 @@ class Context:
     BPM:int
     L:Fraction
     M:Fraction
-    Key:ParsedKey
+    Key:Optional[ParsedKey]
     def set(self, field_name:str, value:str):
         if field_name == "Q":
             self.BPM = bpm_from_Q(value)
@@ -39,6 +40,6 @@ class Context:
             self.L = parse_L(value)
         elif field_name == "M":
             self.M = parse_time_sig(value)
-        elif field_name == "Key":
+        elif field_name == "K":
             self.Key = parse_k_field(value)
             

@@ -22,13 +22,15 @@ class ChordSymbol(MeasurePrimitive):
         end_beat = latest.notes[-1].end_beat if len(latest.notes) > 0 else Fraction(0)
         if len(latest.notes) > 0:
             latest.chords[-1].end_beat = end_beat
-        end_beat *= context.L
+        
         chordname = self.root + "".join(self.raw_types)
         if self.bass: chordname += "/" + self.bass
-        tones = Chord(self.root).components(False)
-        assert context.Key["tonic"]
+        tones = Chord(chordname).components(False)
+
+        assert context.Key and context.Key["tonic"]
         is_diatonic = is_diatonic_chord(chordname, context.Key["tonic"], context.Key["mode"], use_harmonic_in_minor=True)
         is_triad = len(tones) == 3
+
         chord = ChordEvent(
             end_beat,
             strict_ceil(end_beat),

@@ -1,5 +1,7 @@
+from fractions import Fraction
 from lark import Lark
-from parser.eval.measure import extract_measures
+from parser.ast.context import Context
+from parser.ast.measure_info import MeasureInfo
 from parser.transformer.ABCMusicAST import ABCMusicAST
 from parser.lexer.lexer import abc_parser
 
@@ -19,4 +21,8 @@ Q: 1/4=150
 tree = abc_parser.parse(text)      # Lark Tree
 # print(tree)
 ast = ABCMusicAST().transform(tree)            # 変換
-extract_measures(ast)
+c = Context(0, Fraction(0), Fraction(0), None)
+measure_list:list[MeasureInfo] = []
+ast.eval(c, measure_list)
+for m in measure_list:
+    m.dump()
