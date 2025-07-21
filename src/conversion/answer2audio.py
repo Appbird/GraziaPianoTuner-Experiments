@@ -4,10 +4,10 @@ import sys
 from .answer2abc import extract_abc_score
 from .abc2audio import abc2wav
 from pathlib import Path
-from utility.Result import Result
+from utility.ABC2AudioResult import ABC2AudioResult
 from utility.paths import filename
 
-def answer2audio(answer_file:Path) -> Result:
+def answer2audio(answer_file:Path) -> ABC2AudioResult:
     """
     `ans_path`に格納されている、GPT-4から返ってきたプロンプトの返答に
     含まれているabc記譜法の楽譜を抽出し、

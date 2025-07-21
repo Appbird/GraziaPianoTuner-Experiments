@@ -9,7 +9,7 @@ from datetime import datetime
 
 from conversion.answer2audio import answer2audio
 from llm_api import gpt4
-from utility.Result import Result, ResultOK
+from utility.ABC2AudioResult import ABC2AudioResult, ResultOK
 from utility.error_logs import write_error_log
 from utility.load_prompts import load_best_prompt
 
@@ -26,7 +26,7 @@ from conceptual_parameters.set_modification_test import *
 
 def generate_music(
         client:OpenAI, result_dst_file:Path,
-        thread_results:list[Result], exp_no:int,
+        thread_results:list[ABC2AudioResult], exp_no:int,
         system_prompt:str, user_prompt:str
     ):
     response = gpt4.ask(client, MODEL_NAME, TEMPARATURE, system_prompt, user_prompt)
@@ -45,7 +45,7 @@ def do_experiment():
     for (case_name, modifying_prompt) in MODIFICATION_LIST:
         threads:list[Thread] = []
         print(f"[INFO] starts wave {case_name}.")
-        thread_results:list[Result] = [ResultOK() for _ in range(NUM_TRIALS)]
+        thread_results:list[ABC2AudioResult] = [ResultOK() for _ in range(NUM_TRIALS)]
 
         for trial in range(NUM_TRIALS):
             

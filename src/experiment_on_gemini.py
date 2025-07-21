@@ -8,7 +8,7 @@ from time import sleep
 
 from conversion.abc2audio import abc2wav
 from conversion.answer2abc import extract_abc_score
-from utility.Result import Result, ResultOK
+from utility.ABC2AudioResult import ABC2AudioResult, ResultOK
 
 from llm_api.gemini import set_gemini_API_Key, ask_gemini_pro
 
@@ -40,7 +40,7 @@ def test():
     print(load_prompts())
 
 
-def generate_music(exp_name:str, thread_results:list[Result], exp_no:int, system_prompt:str, user_prompt:str):
+def generate_music(exp_name:str, thread_results:list[ABC2AudioResult], exp_no:int, system_prompt:str, user_prompt:str):
     def filename(ext:str):
         return Path.cwd()/Path(f"result/{MODEL_NAME}/{exp_name}/{exp_no+1}.{ext}")
     answer_file = filename("ans")
@@ -69,7 +69,7 @@ def generate_music(exp_name:str, thread_results:list[Result], exp_no:int, system
     thread_results[exp_no] = abc2wav(str(abc_file), str(midi_file), str(wav_file))
 
 
-def write_error_log(exp_name:str, thread_results:list[Result]):
+def write_error_log(exp_name:str, thread_results:list[ABC2AudioResult]):
     makedirs(Path.cwd()/f"result/{MODEL_NAME}/{exp_name}/", exist_ok=True)
     success_cases_count = 0
     perfect_cases_count = 0
@@ -92,7 +92,7 @@ def do_experiment():
     phase_count = 0
     for (exp_name, prompt) in load_prompts():
         print(f"[INFO] starts {exp_name}.")
-        thread_results:list[Result] = [ResultOK()] * NUM_TRIALS
+        thread_results:list[ABC2AudioResult] = [ResultOK()] * NUM_TRIALS
 
         assert NUM_TRIALS % NUM_THREAD == 0
         wave_count = NUM_TRIALS // NUM_THREAD

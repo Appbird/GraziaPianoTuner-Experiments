@@ -1,10 +1,10 @@
 from os import makedirs
 from pathlib import Path
 
-from .Result import Result
+from .ABC2AudioResult import ABC2AudioResult
 
 
-def write_error_log(result_dir:Path, thread_results:list[Result]) -> tuple[int, int]:
+def write_error_log(result_dir:Path, thread_results:list[ABC2AudioResult]) -> tuple[int, int]:
     """
     指定したパス`path`に、`thread_results`に記述されている結果の系列をもとにエラーログを書き起こす。
     # returns

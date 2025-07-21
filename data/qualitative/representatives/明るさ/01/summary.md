@@ -1,20 +1,20 @@
 # 明るさ / Sample 01
 
-- a = 0.89218
-- b = 0.086939
-- Δx = -0.805241
+- a = 0.639427
+- b = 0.025011
+- Δx = -0.614416
 
 | Feature | A | B | Δ (B - A) |
 |---------|---|---|-----------|
 | major_ratio | 1 | 0 | -1 |
 | minor_ratio | 0 | 1 | 1 |
-| bpm_mean | 140 | 60 | -80 |
-| chord_ratio_triad_diatonic | 0.695652 | 1 | 0.304348 |
-| chord_ratio_tetrad_diatonic | 0.304348 | 0 | -0.304348 |
+| bpm_mean | 140 | 80 | -60 |
+| chord_ratio_triad_diatonic | 0.470588 | 0.882353 | 0.411765 |
+| chord_ratio_tetrad_diatonic | 0.529412 | 0.117647 | -0.411765 |
 | chord_ratio_nondiatonic | 0 | 0 | 0 |
-| pitch_range | 19 | 14 | -5 |
-| pitch_average | 70.3253 | 68.1132 | -2.21209 |
-| pitch_entropy | 3.40802 | 2.48094 | -0.927083 |
-| interval_entropy | 3.88014 | 2.94536 | -0.934783 |
-| ioi_average | 0.536585 | 0.538462 | 0.00187617 |
-| ioi_entropy | 0.869534 | 0.913151 | 0.0436172 |
+| pitch_range | 19 | 24 | 5 |
+| pitch_average | 71.6056 | 61.4048 | -10.2009 |
+| pitch_entropy | 3.67737 | 3.54803 | -0.129341 |
+| interval_entropy | 4.15531 | 4.14721 | -0.00810093 |
+| ioi_average | 0.857143 | 0.722892 | -0.134251 |
+| ioi_entropy | 1.11095 | 0.994715 | -0.116233 |

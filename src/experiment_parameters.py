@@ -9,7 +9,7 @@ from datetime import datetime
 
 from conversion.answer2audio import answer2audio
 from llm_api import gpt4
-from utility.Result import Result, ResultOK
+from utility.ABC2AudioResult import ABC2AudioResult, ResultOK
 from utility.error_logs import write_error_log
 from utility.load_prompts import load_best_prompt
 
@@ -29,7 +29,7 @@ all_pattern_count = len(ADJ_LIST) * len(PARAM_LIST) * NUM_TRIALS
 
 def generate_music(
         client:OpenAI, result_dst_file:Path,
-        thread_results:list[Result], exp_no:int,
+        thread_results:list[ABC2AudioResult], exp_no:int,
         system_prompt:str, user_prompt:str
     ):
     response = gpt4.ask(client, MODEL_NAME, TEMPARATURE, system_prompt, user_prompt)
@@ -42,7 +42,7 @@ def do_experiment():
     client = gpt4.get_client()
     sys_prompt = load_best_prompt()
 
-    thread_results:list[Result] = [ResultOK() for _ in range(all_pattern_count)]
+    thread_results:list[ABC2AudioResult] = [ResultOK() for _ in range(all_pattern_count)]
     
     trial_no = 0
     dt_now_title = datetime.now().strftime("%Y%m%d_%H%M%S")

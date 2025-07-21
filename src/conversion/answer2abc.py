@@ -1,10 +1,10 @@
 import re
 from typing import Tuple
 from fractions import Fraction
-from utility.Result import Result, ProcessState, ResultOK
+from utility.ABC2AudioResult import ABC2AudioResult, ProcessState, ResultOK
 
 #TODO test this function
-def extract_abc_score(response:str) -> tuple[Result, str]:
+def extract_abc_score(response:str) -> tuple[ABC2AudioResult, str]:
     """
     入力`response`から最後にコードブロックに記述されたABC形式の楽譜を抜き出す。
     ただし、抜き出すことに失敗した場合には、全文を返す。
@@ -16,7 +16,7 @@ def extract_abc_score(response:str) -> tuple[Result, str]:
     """
     pattern = r'```[^\n]*\n([^`]+?)```'
     extracted_scores = re.findall(pattern, response)
-    if len(extracted_scores) == 0: return (Result(ProcessState.FAILED_EXTRACT_AUDIO, "There is no abc score in output."), response)
+    if len(extracted_scores) == 0: return (ABC2AudioResult(ProcessState.FAILED_EXTRACT_AUDIO, "There is no abc score in output."), response)
     
     abc_score = postprocess(extracted_scores[-1])
     return (ResultOK(), abc_score)

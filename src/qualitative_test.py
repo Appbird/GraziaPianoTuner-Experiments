@@ -127,7 +127,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             logging.debug(f"\n{df_corr}")
         except Exception as e:
             logging.exception(f"相関計算中にエラー: {e}")
-            return 1
     else:
         logging.info("相関計算ステップをスキップ (--skip-experiments)")
 

@@ -102,12 +102,24 @@ def run_experiments(
         for _ in range(N):
             a, b = sample_ab(rng, *range_a, *range_b)
             logging.info(f"対象値: {a} -> {b}")
-            result = compute_features_for_pair(
-                X, a, b,
-                cache_dir=cache_dir,
-                precision=precision,
-                hashing=hashing
-            )
+            persistance = 3
+            while persistance > 0:
+                try:
+                    result = compute_features_for_pair(
+                        X, a, b,
+                        cache_dir=cache_dir,
+                        precision=precision,
+                        hashing=hashing
+                    )
+                    break
+                except Exception as e:
+                    logging.exception(f"compute_feature_for _ pair: {e}")
+                    persistance -= 1
+                    if persistance > 0:
+                        logging.info(f"もう一度生成しなおします。(persistance = {persistance})") 
+                    else:
+                        print("Failed to generate music three times: ")
+                        exit(1)
             dx = result["dx"]
             deltas_x.append(dx)
             for feat, val in result["diff_features"].items():
