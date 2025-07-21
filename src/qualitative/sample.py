@@ -9,6 +9,8 @@ import pandas as pd
 from conversion.abc2audio import abc2wav
 from qualitative.feature.index import compute_extended_global_features
 from qualitative.gen_music import to_measures
+from utility.result import SimplifiedResult, unify, Success, Failure
+
 
 # ==== ここで既存の関数 / クラスを import する想定 ====
 # from your_module import to_measures, compute_extended_global_features, ExtendedGlobalFeatures, abc2audio
@@ -45,9 +47,7 @@ def read_cache_file(path: Path):
         return json.load(f)
 
 def compute_features_from_abc(abc_text: str):
-    measures = to_measures(abc_text)
-    feat = compute_extended_global_features(measures)
-    return asdict(feat)
+    return to_measures(abc_text).bind(compute_extended_global_features).map(asdict)
 
 def write_abc(text: str, path: Path):
     path.write_text(text, encoding="utf-8")
@@ -78,7 +78,7 @@ def process_axis(
     rng: random.Random,
     k: int = 3,
     audio: bool = True
-):
+) -> SimplifiedResult[list, Exception]:
     samples = pick_samples(files, k, rng)
     records_for_csv = []
     axis_out = out_root / X
@@ -110,11 +110,11 @@ def process_axis(
         write_abc(abc_b, b_abc_path)
 
         # 特徴量計算
-        feat_a = compute_features_from_abc(abc_a)
-        feat_b = compute_features_from_abc(abc_b)
+        match unify(compute_features_from_abc(abc_a), compute_features_from_abc(abc_b)):
+            case Failure(_) as f: return f
+            case Success(succ): feat_a, feat_b = succ
+        
         deltas = {k: feat_b[k] - feat_a[k] for k in FEATURE_COLUMNS}
-
-        # JSON 保存
         feat_out = {
             "X": X,
             "a": a,
@@ -127,8 +127,7 @@ def process_axis(
         (sample_dir / "features.json").write_text(
             json.dumps(feat_out, ensure_ascii=False, indent=2),
             encoding="utf-8"
-        )
-
+        ) 
         # Markdown summary
         (sample_dir / "summary.md").write_text(
             format_markdown_summary(X, idx, a, b, feat_a, feat_b, deltas),
@@ -157,7 +156,7 @@ def process_axis(
             flat_row[f"D_{key}"] = deltas[key]
         records_for_csv.append(flat_row)
 
-    return records_for_csv
+    return Success(records_for_csv)
 
 def export_representatives(
     cache_root: str | Path = "cache_music",

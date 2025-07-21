@@ -8,8 +8,10 @@ from parser.ast.measure_info import MeasureInfo
 from parser.ast.score import Score
 from parser.lexer.lexer import abc_parser
 from parser.transformer.ABCMusicAST import ABCMusicAST
+from returns.result import Result, safe
 
-def compose_music(X:str, a:float, b:float):
+@safe
+def compose_music(X:str, a:float, b:float) -> tuple[str, str]:
     prompt_path = Path("./src/qualitative/prompt_template/")
     model = Model.gpt_4o_2024_08_06
     system_msg = PromptTemplate(prompt_path/"system.txt")
@@ -20,12 +22,13 @@ def compose_music(X:str, a:float, b:float):
     gpt = GPT(model, system_msg.embed({}))
     gpt.tell(user_msg.embed(before_param))
     result, score_a = extract_abc_score(gpt.ask(True))
-    assert result.is_ok()
+    assert result.is_ok(), result.reason
     gpt.tell(user_msg.embed(after_param))
     result, score_b = extract_abc_score(gpt.ask(True))
-    assert result.is_ok()
-    return score_a, score_b
+    assert result.is_ok(), result.reason
+    return (score_a, score_b)
 
+@safe
 def compose_with_two_axes(X:str, Y:str, a:float, b:float):
     prompt_path = Path("./src/qualitative/prompt_template/")
     model = Model.gpt_4o_2024_08_06
@@ -38,7 +41,7 @@ def compose_with_two_axes(X:str, Y:str, a:float, b:float):
     assert result.is_ok(), result.reason
     return score_a
 
-
+@safe
 def to_measures(abc:str):
     tree = abc_parser.parse(abc+"\n")
     ast:Score = ABCMusicAST().transform(tree)

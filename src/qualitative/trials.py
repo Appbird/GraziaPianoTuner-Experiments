@@ -1,16 +1,19 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 from pathlib import Path
 import random
-import math
 from dataclasses import asdict
-from typing import Callable, Sequence
+from typing import TypedDict
 import pandas as pd
 from scipy.stats import pearsonr
+from scipy.stats._stats_py import PearsonRResult
 
 from qualitative.cache import compose_music_cached
 from qualitative.feature.index import compute_extended_global_features
-from qualitative.gen_music import compose_music, to_measures
+from qualitative.gen_music import to_measures
 
+from returns.result import Success, Result, Failure
+from utility.result import SimplifiedResult
 
 FEATURE_COLUMNS = [
     "major_ratio", "minor_ratio", "bpm_mean",
@@ -19,19 +22,20 @@ FEATURE_COLUMNS = [
     "interval_entropy", "ioi_average", "ioi_entropy"
 ]
 
-def _safe_pearson(x_vals, y_vals):
+
+def _safe_pearson(x_vals, y_vals) -> SimplifiedResult[PearsonRResult, Exception]:
     """
     分散ゼロや要素不足のとき NaN を返すヘルパ。
     """
     if len(x_vals) < 2:
-        return float("nan")
+        return Failure(Exception("safe_pearson: lack of samples."))
     if _variance_zero(x_vals) or _variance_zero(y_vals):
-        return float("nan")
+        return Failure(Exception("safe_pearson: variance is zero."))
     try:
-        r, _ = pearsonr(x_vals, y_vals)
-        return r
+        result: PearsonRResult = pearsonr(x_vals, y_vals)
+        return Success(result)
     except Exception:
-        return float("nan")
+        return Failure(Exception("safe_pearson: variance is zero."))
 
 def _variance_zero(xs):
     first = xs[0]
@@ -54,6 +58,13 @@ def sample_ab(rng: random.Random, low_a: float, high_a: float,
             return a, b
     # どうしても差が出ないなら最後を返す
     return a, b
+
+class FeaturesDiff(TypedDict):
+    a:float
+    b:float
+    dx:float
+    diff_features:dict[str, int|float]
+
 def compute_features_for_pair(
     X: str,
     a: float,
@@ -61,26 +72,17 @@ def compute_features_for_pair(
     cache_dir: str | Path = "data/cache_music",
     precision: int = 6,
     hashing: bool = False
-) -> dict:
-    abc_a, abc_b = compose_music_cached(
-        X, a, b,
-        cache_dir=cache_dir,
-        precision=precision,
-        hashing=hashing
+) -> Result[FeaturesDiff, Exception]:
+    match compose_music_cached(X, a, b, cache_dir=cache_dir, precision=precision, hashing=hashing):
+        case Failure(_) as f: return f
+        case Success(succ): abc_a, abc_b = succ
+    return Result.do(
+        { "a": a, "b": b, "dx": b - a, "diff_features": diff_features }
+        for ma in to_measures(abc_a).bind(compute_extended_global_features).map(asdict)
+        for mb in to_measures(abc_b).bind(compute_extended_global_features).map(asdict)
+        for diff_features in Success({k: mb[k] - ma[k] for k in FEATURE_COLUMNS})
     )
-    measures_a = to_measures(abc_a)
-    measures_b = to_measures(abc_b)
-    feat_a = compute_extended_global_features(measures_a)
-    feat_b = compute_extended_global_features(measures_b)
-    dict_a = asdict(feat_a)
-    dict_b = asdict(feat_b)
-    diff = {k: dict_b[k] - dict_a[k] for k in FEATURE_COLUMNS}
-    return {
-        "a": a,
-        "b": b,
-        "dx": b - a,
-        "diff_features": diff
-    }
+
 
 def run_experiments(
     adjs,
@@ -92,46 +94,61 @@ def run_experiments(
     cache_dir="cache_music",
     precision=6,
     hashing=False
-):
+) -> SimplifiedResult[pd.DataFrame, Exception]:
     rng = random.Random(seed)
     rows = []
     for X in adjs:
         logging.info(f"対象軸: {X}")
+        # まず各 trial の a,b をシード固定で生成しておく
+        ab_list = [sample_ab(rng, *range_a, *range_b) for _ in range(N)]
+        
+        # トライアル１つ分を実行する関数
+        def run_trial(a_b_pair) -> SimplifiedResult[FeaturesDiff, Exception]:
+            a, b = a_b_pair
+            logging.info(f"[{X}] trial {a:.3f} -> {b:.3f} -- start to compose")
+            for i in range(3):
+                match compute_features_for_pair(X, a, b,
+                    cache_dir=cache_dir,
+                    precision=precision,
+                    hashing=hashing
+                ):
+                    case Success(_) as s:
+                        logging.info(f"[{X}] trial {a:.3f} -> {b:.3f} -- finish composing")
+                        return s
+                    case Failure(e):
+                        logging.exception(f"[{X}] compute_features_for_pair エラー: {e}")
+                        if i < 2: logging.info(f"[{X}] 再試行します… (残 {3-i})")
+            return Failure(Exception(f"Failed after 3 attempts: {e}"))
+
+        # 10スレッドで並列に実行
         deltas_x = []
         deltas_by_feature = {feat: [] for feat in FEATURE_COLUMNS}
-        for _ in range(N):
-            a, b = sample_ab(rng, *range_a, *range_b)
-            logging.info(f"対象値: {a} -> {b}")
-            persistance = 3
-            while persistance > 0:
-                try:
-                    result = compute_features_for_pair(
-                        X, a, b,
-                        cache_dir=cache_dir,
-                        precision=precision,
-                        hashing=hashing
-                    )
-                    break
-                except Exception as e:
-                    logging.exception(f"compute_feature_for _ pair: {e}")
-                    persistance -= 1
-                    if persistance > 0:
-                        logging.info(f"もう一度生成しなおします。(persistance = {persistance})") 
-                    else:
-                        print("Failed to generate music three times: ")
-                        exit(1)
-            dx = result["dx"]
-            deltas_x.append(dx)
-            for feat, val in result["diff_features"].items():
-                deltas_by_feature[feat].append(val)
-        r = lambda feat: _safe_pearson(deltas_x, deltas_by_feature[feat])
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(run_trial, ab) for ab in ab_list]
+            for fut in as_completed(futures):
+                match fut.result():
+                    case Failure(err): logging.error(err);
+                    case Success(succ): 
+                        diff_feats = succ
+                        deltas_x.append(diff_feats["dx"])
+                        for feat, val in diff_feats["diff_features"].items():
+                            deltas_by_feature[feat].append(val)
+
+        # 相関計算
+        def r(feat: str) -> float:
+            match _safe_pearson(deltas_x, deltas_by_feature[feat]):
+                case Failure(err):
+                    logging.info(f"replaced to NaN @ {feat} / {ab_list} / {X}: {err}")
+                    return float("nan")
+                case Success(succ):
+                    return succ.correlation
         row = {feat: f"{r(feat):.3f}" for feat in FEATURE_COLUMNS}
         row["__trials__"] = str(N)
         rows.append((X, row))
     df = pd.DataFrame({name: data for name, data in rows}).T
     df = df[FEATURE_COLUMNS + ["__trials__"]]
     df.to_csv(csv_path, encoding="utf-8")
-    return df
+    return Success(df)
 
 # 使い方例:
 # adjs = ["明るさ", "ジャズ感", "静けさ"]

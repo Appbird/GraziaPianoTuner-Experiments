@@ -18,6 +18,11 @@ from typing import List, Dict
 
 from qualitative.feature.index import compute_extended_global_features
 from qualitative.gen_music import compose_with_two_axes, to_measures
+from returns.pipeline import flow
+from returns.pointfree import bind
+from returns.result import Success, Failure
+
+from utility.result import SimplifiedResult
 
 # ====== 既存モジュールからインポートする前提 ======
 # from yourpkg.generation import compose_with_two_axes
@@ -50,25 +55,29 @@ def cache_path(cache_root: Path, i:int, X: str, Y: str, x: float, y: float, prec
     return cache_root / f"{X}__{Y}" / f"{i}__{x:.{precision}f}_{y:.{precision}f}.abc"
 
 def load_or_generate_abc(i:int, X: str, Y: str, x: float, y: float,
-                         cache_root: Path, use_cache: bool, precision: int) -> str:
+                         cache_root: Path, use_cache: bool, precision: int) -> SimplifiedResult[str, Exception]:
     if use_cache:
         path = cache_path(cache_root, i, X, Y, x, y, precision)
         if path.exists():
-            return path.read_text(encoding="utf-8")
-    abc = compose_with_two_axes(X, Y, x, y)
+            return Success(path.read_text(encoding="utf-8"))
+    match compose_with_two_axes(X, Y, x, y):
+        case Failure(_) as f: return f
+        case Success(succ): abc = succ
     if use_cache:
         path = cache_path(cache_root, i, X, Y, x, y, precision)
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
         tmp.write_text(abc, encoding="utf-8")
         tmp.replace(path)
-    return abc
+    return Success(abc)
 
-def compute_single_features(abc: str) -> Dict:
-    measures = to_measures(abc)
-    feats = compute_extended_global_features(measures)
-    full = asdict(feats)
-    return full
+def compute_single_features(abc: str) -> dict:
+    return flow(
+        abc,
+        to_measures,
+        compute_extended_global_features,
+        asdict
+    )
 
 def main():
     args = parse_args()
@@ -88,7 +97,9 @@ def main():
 
             for t in range(args.trials):
                 print(f"trial = {t}")
-                abc = load_or_generate_abc(t, X, Y, x, y, cache_root, use_cache, args.precision)
+                match load_or_generate_abc(t, X, Y, x, y, cache_root, use_cache, args.precision):
+                    case Failure(_) as f: return f
+                    case Success(succ): abc = succ
                 feats = compute_single_features(abc)
                 for k in chosen_feats:
                     feat_samples[k].append(feats[k])

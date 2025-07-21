@@ -1,13 +1,22 @@
 import json
+import logging
 import os
 from pathlib import Path
 from datetime import datetime
 import hashlib
+from typing import Optional, Tuple, TypeVar
+from qualitative.gen_music import compose_music, to_measures
 
-from qualitative.gen_music import compose_music
+from returns.result import Success, Failure, Result
+
+from utility.result import SimplifiedResult, aperture
 
 def format_float(f: float, precision: int = 6) -> str:
     return f"{f:.{precision}f}"
+
+def is_valid(abc:str) -> bool:
+    result = to_measures(abc)
+    return isinstance(result, Success)
 
 def compose_music_cached(
     X: str,
@@ -17,7 +26,7 @@ def compose_music_cached(
     precision: int = 6,
     hashing: bool = False,
     force_recompute: bool = False,
-) -> tuple[str, str]:
+) -> SimplifiedResult[tuple[str, str], Exception]:
     """
     compose_music の結果(abc_a, abc_b) を (X,a,b) ごとにキャッシュ。
     
@@ -46,7 +55,6 @@ def compose_music_cached(
         subdir = cache_dir / X
         filename = f"{key}.json"
     else:
-        # 可読性重視
         subdir = cache_dir / X
         filename = f"{a_str}_{b_str}.json"
 
@@ -58,13 +66,19 @@ def compose_music_cached(
             with path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
             # バージョン互換チェック等あればここで
-            return data["abc_a"], data["abc_b"]
+            validity_a = is_valid(data["abc_a"])
+            validity_b = is_valid(data["abc_b"])
+            if validity_a and validity_b:
+                return Success((data["abc_a"], data["abc_b"]))
+            else:
+                if validity_a: logging.error("編集前の楽譜aに異常がありました。再生成を試みます。")
+                if validity_b: logging.error("編集後の楽譜bに異常がありました。再生成を試みます。")
         except Exception:
-            # 壊れていたら再生成
             pass
 
-    # 実際の生成（重い処理想定）
-    abc_a, abc_b = compose_music(X, a, b)
+    match compose_music(X, a, b):
+        case Failure(_) as f: return f
+        case succ: abc_a, abc_b = succ.unwrap()
 
     data = {
         "version": 1,
@@ -82,4 +96,4 @@ def compose_music_cached(
         json.dump(data, f, ensure_ascii=False, indent=2)
     os.replace(tmp_path, path)  # atomic-ish
 
-    return abc_a, abc_b
+    return Success((abc_a, abc_b))

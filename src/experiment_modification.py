@@ -23,7 +23,6 @@ SLEEP_SEC = 60
 ## 概念パラメータの入力について
 from conceptual_parameters.set_modification_test import *
 
-
 def generate_music(
         client:OpenAI, result_dst_file:Path,
         thread_results:list[ABC2AudioResult], exp_no:int,
