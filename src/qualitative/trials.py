@@ -51,6 +51,7 @@ def sample_ab(rng: random.Random, low_a: float, high_a: float,
     """
     a,b を独立一様サンプリング。a==b を避けたいなら再試行。
     """
+    a, b = 0., 0.
     for _ in range(max_retry):
         a = rng.uniform(low_a, high_a)
         b = rng.uniform(low_b, high_b)
@@ -101,38 +102,46 @@ def run_experiments(
         logging.info(f"対象軸: {X}")
         # まず各 trial の a,b をシード固定で生成しておく
         ab_list = [sample_ab(rng, *range_a, *range_b) for _ in range(N)]
-        
         # トライアル１つ分を実行する関数
         def run_trial(a_b_pair) -> SimplifiedResult[FeaturesDiff, Exception]:
             a, b = a_b_pair
             logging.info(f"[{X}] trial {a:.3f} -> {b:.3f} -- start to compose")
-            for i in range(3):
-                match compute_features_for_pair(X, a, b,
-                    cache_dir=cache_dir,
-                    precision=precision,
-                    hashing=hashing
-                ):
-                    case Success(_) as s:
-                        logging.info(f"[{X}] trial {a:.3f} -> {b:.3f} -- finish composing")
-                        return s
-                    case Failure(e):
-                        logging.exception(f"[{X}] compute_features_for_pair エラー: {e}")
-                        if i < 2: logging.info(f"[{X}] 再試行します… (残 {3-i})")
-            return Failure(Exception(f"Failed after 3 attempts: {e}"))
-
+            # TODO:
+            #   1. cache_dirをcache_fileにする(つまり、パラメータ基準での命名としない)
+            #   2. その状態で、cache_fileに何か入っていればそれを読み込み、何も入っていなければ読み込まない、とする。
+            #   3. 読み込み可能かどうかは事前に判別しておく。読み込み不可であった場合、もう一度再生成を試みる。
+            #      ABC記譜法はパースにそれほど時間はかからないため、boolフラグなどを持つ必要はないと思われる。（それをする時間はない）
+            match compute_features_for_pair(X, a, b,
+                cache_dir=cache_dir,
+                precision=precision,
+                hashing=hashing
+            ):
+                case Success(_) as s:
+                    logging.info(f"[{X}] trial {a:.3f} -> {b:.3f} -- finish composing")
+                    return s
+                case Failure(e):
+                    logging.exception(f"[{X}] compute_features_for_pair エラー: {e}")
+            return Failure(Exception(f"Failed to compose: {e}"))
         # 10スレッドで並列に実行
         deltas_x = []
+        missing_count = 0
         deltas_by_feature = {feat: [] for feat in FEATURE_COLUMNS}
         with ThreadPoolExecutor(max_workers=10) as executor:
             futures = [executor.submit(run_trial, ab) for ab in ab_list]
             for fut in as_completed(futures):
                 match fut.result():
-                    case Failure(err): logging.error(err);
-                    case Success(succ): 
+                    case Failure(err):
+                        logging.error(err)
+                        missing_count += 1
+                    case Success(succ):
                         diff_feats = succ
                         deltas_x.append(diff_feats["dx"])
                         for feat, val in diff_feats["diff_features"].items():
                             deltas_by_feature[feat].append(val)
+
+        if missing_count > 0:
+            logging.error(f"{missing_count}曲で生成に失敗しました。生成に失敗した分について、もう一度再生成してください。")
+            logging.info(f"コマンドラインプロンプトでもう一度同じコマンドを打てば、生成に失敗した分を同じパラメータで再生成できます。")
 
         # 相関計算
         def r(feat: str) -> float:
