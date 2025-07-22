@@ -1,0 +1,17 @@
+{
+  "name": "ec2024si-exp",
+  "version": "1.0.0",
+  "description": "このリポジトリでは、情報処理学会 2024年度12月号エンタテインメントコンピューティング特集号に向けて 投稿された論文「GPT-4のプロンプトエンジニアリングによる対話的音楽生成の実現」にて、 実験の際に使用したコード・データ・プロンプトについて掲載しています。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "abc2svg": "^1.22.1"
+  }
+}

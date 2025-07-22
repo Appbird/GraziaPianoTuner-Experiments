@@ -29,6 +29,22 @@ def compose_music(X:str, a:float, b:float) -> tuple[str, str]:
     return (score_a, score_b)
 
 @safe
+def compose(X:str, params:list[float]):
+    prompt_path = Path("./src/qualitative/prompt_template/")
+    model = Model.gpt_4o_2024_08_06
+    system_msg = PromptTemplate(prompt_path/"system.txt")
+    user_msg = PromptTemplate(prompt_path/"input.txt")
+    gpt = GPT(model, system_msg.embed({}))
+    scores:list[str] = []
+    for param in params:
+        param = {"axis": X, "value": f"{param:.2f}"}
+        gpt.tell(user_msg.embed(param))
+        result, score = extract_abc_score(gpt.ask(True))
+        assert result.is_ok(), result.reason
+        scores.append(score)
+    return scores
+
+@safe
 def compose_with_two_axes(X:str, Y:str, a:float, b:float):
     prompt_path = Path("./src/qualitative/prompt_template/")
     model = Model.gpt_4o_2024_08_06
@@ -40,6 +56,7 @@ def compose_with_two_axes(X:str, Y:str, a:float, b:float):
     result, score_a = extract_abc_score(gpt.ask(True))
     assert result.is_ok(), result.reason
     return score_a
+
 
 @safe
 def to_measures(abc:str):

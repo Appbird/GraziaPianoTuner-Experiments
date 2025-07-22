@@ -17,3 +17,4 @@ result-mod/**
 result/**
 *.csv
 *.meta.json
+node_modules
