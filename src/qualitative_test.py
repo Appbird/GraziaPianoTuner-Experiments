@@ -17,6 +17,7 @@ from typing import Sequence
 
 from qualitative.sample import export_representatives
 from qualitative.trials import run_experiments
+from returns.result import Success, Failure
 
 DEFAULT_FEATURE_CORR_CSV = "./data/qualitative/param_feature_correlations.csv"
 DEFAULT_CACHE_DIR = "./data/qualitative/cache_music"
@@ -110,21 +111,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     # 1) 実験 (相関行列)
     if not args.skip_experiments:
         logging.info("=== 実験 (相関行列計算) 開始 ===")
-        try:
-            df_corr = run_experiments(
-                adjs=axes,
-                N=args.trials,
-                range_a=tuple(args.range_a),
-                range_b=tuple(args.range_b),
-                seed=args.seed,
-                csv_path=args.corr_csv,
-                cache_dir=args.cache_dir,
-                hashing=args.hashing
-            )
-            logging.info(f"相関行列 CSV 出力: {args.corr_csv}")
-            logging.debug(f"\n{df_corr}")
-        except Exception as e:
-            logging.exception(f"相関計算中にエラー: {e}")
+        exp_result = run_experiments(
+            adjs=axes,
+            N=args.trials,
+            range_a=tuple(args.range_a),
+            range_b=tuple(args.range_b),
+            seed=args.seed,
+            csv_path=args.corr_csv,
+            cache_dir=args.cache_dir,
+            hashing=args.hashing
+        )
+        match exp_result:
+            case Success(result):
+                df_corr, df_pvalue =  result
+                logging.info(f"相関行列 CSV 出力: {args.corr_csv}")
+                logging.debug(f"\n{df_corr}")
+            case Failure(e): 
+                logging.exception(f"相関計算中にエラー: {e}")    
     else:
         logging.info("相関計算ステップをスキップ (--skip-experiments)")
 

@@ -25,20 +25,6 @@ FEATURE_COLUMNS = [
 ]
 
 
-def _safe_pearson(x_vals, y_vals) -> SimplifiedResult[PearsonRResult, Exception]:
-    """
-    分散ゼロや要素不足のとき NaN を返すヘルパ。
-    """
-    if len(x_vals) < 2:
-        return Failure(Exception("safe_pearson: lack of samples."))
-    if _variance_zero(x_vals) or _variance_zero(y_vals):
-        return Failure(Exception("safe_pearson: variance is zero."))
-    try:
-        result: PearsonRResult = pearsonr(x_vals, y_vals)
-        return Success(result)
-    except Exception as e:
-        return Failure(Exception(f"safe_pearson: something wrong happened.: {e}"))
-
 def _variance_zero(xs):
     first = xs[0]
     for v in xs[1:]:
@@ -95,6 +81,21 @@ def compute_features_for_pair(
     )
 
 
+def _safe_pearson(x_vals, y_vals) -> SimplifiedResult[PearsonRResult, Exception]:
+    """
+    分散ゼロや要素不足のとき NaN を返すヘルパ。
+    """
+    if len(x_vals) < 2:
+        return Failure(Exception("safe_pearson: lack of samples."))
+    if _variance_zero(x_vals) or _variance_zero(y_vals):
+        return Failure(Exception("safe_pearson: variance is zero."))
+    try:
+        result: PearsonRResult = pearsonr(x_vals, y_vals)
+        return Success(result)
+    except Exception as e:
+        return Failure(Exception(f"safe_pearson: something wrong happened.: {e}"))
+
+
 def run_experiments(
     adjs,
     N=30,
@@ -104,9 +105,10 @@ def run_experiments(
     csv_path="param_feature_correlations.csv",
     cache_dir="cache_music",
     hashing=False
-) -> SimplifiedResult[pd.DataFrame, Exception]:
+) -> SimplifiedResult[tuple[pd.DataFrame, pd.DataFrame], Exception]:
     rng = random.Random(seed)
-    rows = []
+    rows_r = []
+    rows_p = []
     for X in adjs:
         logging.info(f"対象軸: {X}")
         # まず各 trial の a,b をシード固定で生成しておく
@@ -145,13 +147,13 @@ def run_experiments(
             logging.info(f"コマンドラインプロンプトでもう一度同じコマンドを打てば、生成に失敗した分を同じパラメータで再生成できます。")
 
         # 相関計算
-        def r(feat: str) -> float:
+        def r(feat: str) -> tuple[float, float]:
             match _safe_pearson(deltas_x, deltas_by_feature[feat]):
                 case Failure(err):
                     logging.info(f"replaced to NaN @ {feat} / {ab_list} / {X}: {err}")
-                    return float("nan")
+                    return float("nan"), float("nan")
                 case Success(succ):
-                    return succ.correlation
+                    return succ.correlation, succ.pvalue # type:ignore
         def plot(feat:str) -> None:
             """
             Scatter plot of deltas_x vs. deltas_by_feature[feat].
@@ -165,14 +167,25 @@ def run_experiments(
             plt.savefig(Path(cache_dir).parent/f"figures/{X}/{feat}.png")
             plt.clf()
         makedirs(Path(cache_dir).parent/f"figures/{X}", exist_ok=True)
-        row = {feat: f"{r(feat):.3f}" for feat in FEATURE_COLUMNS}
-        for feat in FEATURE_COLUMNS: plot(feat)
-        row["__trials__"] = str(N)
-        rows.append((X, row))
-    df = pd.DataFrame({name: data for name, data in rows}).T
-    df = df[FEATURE_COLUMNS + ["__trials__"]]
-    df.to_csv(csv_path, encoding="utf-8")
-    return Success(df)
+        row_r: dict[str, str] = {}
+        row_p: dict[str, str] = {}
+        for feat in FEATURE_COLUMNS:
+            plot(feat)
+            r_value, p_value= r(feat)
+            row_r[feat] = f"{r_value:.3f}"
+            row_p[feat] = f"{p_value:.3f}"
+        row_r["__trials__"] = str(N)
+        row_p["__trials__"] = str(N)
+        rows_r.append((X, row_r))
+        rows_p.append((X, row_p))
+    df_r = pd.DataFrame({name: data for name, data in rows_r}).T
+    df_r = df_r[FEATURE_COLUMNS + ["__trials__"]]
+    csv_path = Path(csv_path)
+    df_r.to_csv(csv_path, encoding="utf-8")
+    df_p = pd.DataFrame({name: data for name, data in rows_p}).T
+    df_p = df_p[FEATURE_COLUMNS + ["__trials__"]]
+    df_p.to_csv(csv_path.with_name(f"{csv_path.stem}.pvalue.csv"), encoding="utf-8")
+    return Success((df_r, df_p))
 
 # 使い方例:
 # adjs = ["明るさ", "ジャズ感", "静けさ"]
