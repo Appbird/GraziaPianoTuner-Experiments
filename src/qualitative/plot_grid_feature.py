@@ -10,8 +10,7 @@ import matplotlib.pyplot as plt
 def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", required=True)
-    ap.add_argument("--feature", required=True, help="例: pitch_entropy")
-    ap.add_argument("--out-img", default=None)
+    ap.add_argument("--result_dir", type=Path, required=True, default=None)
     ap.add_argument("--cmap", default="viridis")
     ap.add_argument("--annot", action="store_true", help="各セルに数値表示")
     ap.add_argument("--contour", action="store_true", help="等高線を重ねる")
@@ -19,22 +18,21 @@ def parse_args():
     ap.add_argument("--fmt", default=".2f", help="annot表示フォーマット")
     return ap.parse_args()
 
-def main():
-    args = parse_args()
-    df = pd.read_csv(args.csv)
 
-    base = f"{args.feature}_mean"
+def plot_heatmap_for_feature(df: pd.DataFrame, feature: str, args, result_dir: Path) -> None:
+    base = f"{feature}_mean"
     if base not in df.columns:
-        raise ValueError(f"{base} が列に無いよ。利用可能: {[c for c in df.columns if c.endswith('_mean')]}")
+        print(f"[WARN] {base} が無いのでスキップ")
+        return
 
     pivot = df.pivot(index="y", columns="x", values=base).sort_index()
     xs = pivot.columns.values
     ys = pivot.index.values
-    Z = pivot.values  # shape (len(ys), len(xs))
+    Z = pivot.values
 
-    out_img = args.out_img or f"{Path(args.csv).stem}_{args.feature}_heatmap.png"
+    out_img = result_dir / f"{Path(args.csv).stem}_{feature}_heatmap.png"
 
-    fig, ax = plt.subplots(figsize=(6,5))
+    fig, ax = plt.subplots(figsize=(6, 5))
     im = ax.imshow(
         Z,
         origin="lower",
@@ -47,10 +45,9 @@ def main():
 
     ax.set_xlabel("x")
     ax.set_ylabel("y")
-    ax.set_title(f"{args.feature} (mean)")
+    ax.set_title(f"{feature} (mean)")
 
     if args.contour:
-        # 等高線（値がほぼ一定なら自動レベル調整）
         n_levels = 8
         levels = np.linspace(np.nanmin(Z), np.nanmax(Z), n_levels)
         cs = ax.contour(
@@ -64,8 +61,6 @@ def main():
         ax.clabel(cs, inline=True, fontsize=8, fmt="%.2f")
 
     if args.annot:
-        # グリッド位置をセル座標に合わせて annotation
-        # xs, ys は 0.0,0.1,... と均等なので index を使っても良い
         for j, yv in enumerate(ys):
             for i, xv in enumerate(xs):
                 val = Z[j, i]
@@ -79,7 +74,22 @@ def main():
 
     plt.tight_layout()
     plt.savefig(out_img, dpi=args.dpi)
+    plt.close(fig)
     print(f"[INFO] Saved heatmap: {out_img}")
 
+
+def main():
+    args = parse_args()
+    df = pd.read_csv(args.csv)
+
+    # 出力ディレクトリ作成
+    result_dir = Path(args.result_dir)
+    result_dir.mkdir(parents=True, exist_ok=True)
+
+    # 特定featureのみ or 全部
+    features = sorted({c[:-5] for c in df.columns if c.endswith("_mean")})
+
+    for feat in features:
+        plot_heatmap_for_feature(df, feat, args, result_dir)
 if __name__ == "__main__":
     main()

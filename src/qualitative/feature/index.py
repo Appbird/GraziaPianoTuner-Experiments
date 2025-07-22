@@ -18,7 +18,7 @@ def compute_extended_global_features(measures: List[MeasureInfo]) -> ExtendedGlo
     pitch = compute_pitch_features(ordered_notes)
     interval = compute_interval_features(ordered_notes)
     ioi = compute_ioi_features(representative)
-
+    
     return ExtendedGlobalFeatures(
         **harmonic.__dict__,
         **pitch.__dict__,

@@ -10,17 +10,21 @@ Usage:
 """
 
 from __future__ import annotations
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from itertools import product
+import logging
 import argparse, math, json
 from pathlib import Path
 from dataclasses import asdict
 from statistics import mean, pstdev
 from typing import List, Dict
 
+from qualitative.cache import is_valid
 from qualitative.feature.index import compute_extended_global_features
 from qualitative.gen_music import compose_with_two_axes, to_measures
 from returns.pipeline import flow
 from returns.pointfree import bind
-from returns.result import Success, Failure
+from returns.result import ResultE, Success, Failure
 
 from utility.result import SimplifiedResult
 
@@ -59,7 +63,9 @@ def load_or_generate_abc(i:int, X: str, Y: str, x: float, y: float,
     if use_cache:
         path = cache_path(cache_root, i, X, Y, x, y, precision)
         if path.exists():
-            return Success(path.read_text(encoding="utf-8"))
+            abc= path.read_text(encoding="utf-8")
+            if is_valid(abc): return Success(abc)
+            else: logging.info(f"[{X}{Y}{i}]読み込まれたabc形式には誤りがあったため、再生成を試みます。")
     match compose_with_two_axes(X, Y, x, y):
         case Failure(_) as f: return f
         case Success(succ): abc = succ
@@ -71,13 +77,38 @@ def load_or_generate_abc(i:int, X: str, Y: str, x: float, y: float,
         tmp.replace(path)
     return Success(abc)
 
-def compute_single_features(abc: str) -> dict:
-    return flow(
-        abc,
-        to_measures,
-        compute_extended_global_features,
-        asdict
-    )
+def compute_single_features(abc: str) -> ResultE[dict]:
+    return to_measures(abc).bind(compute_extended_global_features).map(asdict)
+
+def eval_point(
+    X: str,
+    Y: str,
+    x: float,
+    y: float,
+    trials: int,
+    chosen_feats: list[str],
+    cache_root,
+    use_cache: bool,
+    precision: int,
+) -> SimplifiedResult[dict, Exception]:
+    feat_samples: Dict[str, List[float]] = {k: [] for k in chosen_feats}
+    for t in range(trials):
+        match load_or_generate_abc(t, X, Y, x, y, cache_root, use_cache, precision):
+            case Failure(_) as f: return f
+            case Success(abc): pass
+        match compute_single_features(abc):
+            case Failure(_) as f: return f
+            case Success(feats):
+                for k in chosen_feats:
+                    feat_samples[k].append(feats[k])
+        print(f"[{X}-{x:.3f},{Y}-{y:.3f}] composition {t} / {trials} completed!")
+
+    row = {"X_axis": X, "Y_axis": Y, "x": x, "y": y}
+    for k, vals in feat_samples.items():
+        row[f"{k}_mean"] = mean(vals)
+        # row[f"{k}_std"] = pstdev(vals) if len(vals) > 1 else 0.0
+    return Success(row)
+
 
 def main():
     args = parse_args()
@@ -86,32 +117,38 @@ def main():
     cache_root = Path(args.cache_dir)
     chosen_feats = args.features if args.features else FEATURE_COLUMNS
 
-    rows = []
+    points = list(product(GRID_VALUES, GRID_VALUES))
     total_points = len(GRID_VALUES)**2
-    point_index = 0
+    rows: list[dict] = []
 
-    for x in GRID_VALUES:
-        for y in GRID_VALUES:
-            point_index += 1
-            feat_samples: Dict[str, List[float]] = {k: [] for k in chosen_feats}
+    with ThreadPoolExecutor(max_workers=getattr(args, "workers", None)) as ex:
+        futures = {
+            ex.submit(
+                eval_point,
+                X, Y, x, y,
+                args.trials,
+                chosen_feats,
+                cache_root,
+                use_cache,
+                args.precision,
+            ): (x, y)
+            for (x, y) in points
+        }
 
-            for t in range(args.trials):
-                print(f"trial = {t}")
-                match load_or_generate_abc(t, X, Y, x, y, cache_root, use_cache, args.precision):
-                    case Failure(_) as f: return f
-                    case Success(succ): abc = succ
-                feats = compute_single_features(abc)
-                for k in chosen_feats:
-                    feat_samples[k].append(feats[k])
+        for i, fut in enumerate(as_completed(futures), 1):
+            x, y = futures[fut]
+            try:
+                res = fut.result()
+            except Exception as e:
+                # 例外を Failure に包むならここで包んでreturn
+                return Failure(e)
 
-            row = {"X_axis": X, "Y_axis": Y, "x": x, "y": y}
-            for k, vals in feat_samples.items():
-                row[f"{k}_mean"] = mean(vals)
-                if args.with_std:
-                    # 全母集団とは言えないが簡便に母標準偏差(pstdev)利用
-                    row[f"{k}_std"] = pstdev(vals) if len(vals) > 1 else 0.0
-            rows.append(row)
-            print(f"[INFO] ({point_index}/{total_points}) done x={x:.1f}, y={y:.1f}")
+            match res:
+                case Failure(_) as f:
+                    return f
+                case Success(row):
+                    rows.append(row)
+                    print(f"[INFO] ({i}/{total_points}) done x={x:.1f}, y={y:.1f}")
 
     # CSV 出力
     import csv

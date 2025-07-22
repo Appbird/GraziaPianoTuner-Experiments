@@ -83,8 +83,7 @@ def load_axes(args: argparse.Namespace) -> list[str]:
             axes = [line.strip() for line in p.read_text(encoding="utf-8").splitlines() if line.strip()]
         return axes
 
-    if args.axes:
-        return list(args.axes)
+    if args.axes: return list(args.axes)
 
     raise ValueError("No axes specified. Use --axes or --axes-file.")
 
@@ -120,7 +119,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 seed=args.seed,
                 csv_path=args.corr_csv,
                 cache_dir=args.cache_dir,
-                precision=args.precision,
                 hashing=args.hashing
             )
             logging.info(f"相関行列 CSV 出力: {args.corr_csv}")

@@ -1,19 +1,21 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+from os import makedirs
 from pathlib import Path
 import random
 from dataclasses import asdict
 from typing import TypedDict
+from matplotlib import pyplot as plt
 import pandas as pd
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
 from scipy.stats._stats_py import PearsonRResult
 
-from qualitative.cache import compose_music_cached
+from qualitative.cache import compose_music_with_caching, pick_cached_music, pick_previous_params
 from qualitative.feature.index import compute_extended_global_features
 from qualitative.gen_music import to_measures
 
 from returns.result import Success, Result, Failure
-from utility.result import SimplifiedResult
+from utility.result import SimplifiedResult, aperture
 
 FEATURE_COLUMNS = [
     "major_ratio", "minor_ratio", "bpm_mean",
@@ -34,8 +36,8 @@ def _safe_pearson(x_vals, y_vals) -> SimplifiedResult[PearsonRResult, Exception]
     try:
         result: PearsonRResult = pearsonr(x_vals, y_vals)
         return Success(result)
-    except Exception:
-        return Failure(Exception("safe_pearson: variance is zero."))
+    except Exception as e:
+        return Failure(Exception(f"safe_pearson: something wrong happened.: {e}"))
 
 def _variance_zero(xs):
     first = xs[0]
@@ -68,15 +70,23 @@ class FeaturesDiff(TypedDict):
 
 def compute_features_for_pair(
     X: str,
-    a: float,
-    b: float,
+    i: int,
+    a: float, # キャッシュファイルがあったときはそちらを優先する
+    b: float, 
     cache_dir: str | Path = "data/cache_music",
-    precision: int = 6,
     hashing: bool = False
 ) -> Result[FeaturesDiff, Exception]:
-    match compose_music_cached(X, a, b, cache_dir=cache_dir, precision=precision, hashing=hashing):
-        case Failure(_) as f: return f
-        case Success(succ): abc_a, abc_b = succ
+    match pick_cached_music(axes_name=X, filename=f"{i}.json", cache_dir=cache_dir):
+        case Success(succ):     abc_a, abc_b = succ
+        case Failure(_) as f:
+            match pick_previous_params(axes_name=X, filename=f"{i}.json", cache_dir=cache_dir):
+                case Success(succ):
+                    a, b = succ
+                    logging.info(f"[{i}/{X}/{a}-{b}] start regeneration...")
+                case Failure(_) as f: pass
+            match compose_music_with_caching(X, a, b, filename=f"{i}.json", cache_dir=cache_dir, hashing=hashing):
+                case Success(succ):     abc_a, abc_b = succ
+                case Failure(_) as f:   return f
     return Result.do(
         { "a": a, "b": b, "dx": b - a, "diff_features": diff_features }
         for ma in to_measures(abc_a).bind(compute_extended_global_features).map(asdict)
@@ -93,7 +103,6 @@ def run_experiments(
     seed=42,
     csv_path="param_feature_correlations.csv",
     cache_dir="cache_music",
-    precision=6,
     hashing=False
 ) -> SimplifiedResult[pd.DataFrame, Exception]:
     rng = random.Random(seed)
@@ -103,31 +112,24 @@ def run_experiments(
         # まず各 trial の a,b をシード固定で生成しておく
         ab_list = [sample_ab(rng, *range_a, *range_b) for _ in range(N)]
         # トライアル１つ分を実行する関数
-        def run_trial(a_b_pair) -> SimplifiedResult[FeaturesDiff, Exception]:
+        def run_trial(i:int, a_b_pair) -> SimplifiedResult[FeaturesDiff, Exception]:
             a, b = a_b_pair
             logging.info(f"[{X}] trial {a:.3f} -> {b:.3f} -- start to compose")
-            # TODO:
-            #   1. cache_dirをcache_fileにする(つまり、パラメータ基準での命名としない)
-            #   2. その状態で、cache_fileに何か入っていればそれを読み込み、何も入っていなければ読み込まない、とする。
-            #   3. 読み込み可能かどうかは事前に判別しておく。読み込み不可であった場合、もう一度再生成を試みる。
-            #      ABC記譜法はパースにそれほど時間はかからないため、boolフラグなどを持つ必要はないと思われる。（それをする時間はない）
-            match compute_features_for_pair(X, a, b,
-                cache_dir=cache_dir,
-                precision=precision,
-                hashing=hashing
-            ):
+            result = compute_features_for_pair(X, i, a, b, cache_dir=cache_dir, hashing=hashing)
+            match aperture(result):
                 case Success(_) as s:
                     logging.info(f"[{X}] trial {a:.3f} -> {b:.3f} -- finish composing")
                     return s
                 case Failure(e):
-                    logging.exception(f"[{X}] compute_features_for_pair エラー: {e}")
-            return Failure(Exception(f"Failed to compose: {e}"))
+                    logging.error(f"[{X}/{i}] Failed to compose/compute: {e}")
+                    return Failure(Exception(f"Failed to compose: {e}"))
         # 10スレッドで並列に実行
         deltas_x = []
+        start_idx = 0
         missing_count = 0
         deltas_by_feature = {feat: [] for feat in FEATURE_COLUMNS}
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(run_trial, ab) for ab in ab_list]
+            futures = [executor.submit(run_trial, i, ab_list[i-start_idx]) for i in range(start_idx, start_idx+N)]
             for fut in as_completed(futures):
                 match fut.result():
                     case Failure(err):
@@ -138,7 +140,6 @@ def run_experiments(
                         deltas_x.append(diff_feats["dx"])
                         for feat, val in diff_feats["diff_features"].items():
                             deltas_by_feature[feat].append(val)
-
         if missing_count > 0:
             logging.error(f"{missing_count}曲で生成に失敗しました。生成に失敗した分について、もう一度再生成してください。")
             logging.info(f"コマンドラインプロンプトでもう一度同じコマンドを打てば、生成に失敗した分を同じパラメータで再生成できます。")
@@ -151,7 +152,21 @@ def run_experiments(
                     return float("nan")
                 case Success(succ):
                     return succ.correlation
+        def plot(feat:str) -> None:
+            """
+            Scatter plot of deltas_x vs. deltas_by_feature[feat].
+            """
+            x = deltas_x
+            y = deltas_by_feature[feat]            
+            plt.scatter(x, y)
+            plt.xlabel('deltas_x')
+            plt.ylabel(feat)
+            plt.title(f'Scatter plot of {feat}')
+            plt.savefig(Path(cache_dir).parent/f"figures/{X}/{feat}.png")
+            plt.clf()
+        makedirs(Path(cache_dir).parent/f"figures/{X}", exist_ok=True)
         row = {feat: f"{r(feat):.3f}" for feat in FEATURE_COLUMNS}
+        for feat in FEATURE_COLUMNS: plot(feat)
         row["__trials__"] = str(N)
         rows.append((X, row))
     df = pd.DataFrame({name: data for name, data in rows}).T
