@@ -4,7 +4,7 @@ from os import makedirs
 from pathlib import Path
 import random
 from dataclasses import asdict
-from typing import TypedDict
+from typing import Any, TypedDict
 from matplotlib import pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
@@ -95,6 +95,19 @@ def _safe_pearson(x_vals, y_vals) -> SimplifiedResult[PearsonRResult, Exception]
     except Exception as e:
         return Failure(Exception(f"safe_pearson: something wrong happened.: {e}"))
 
+def _safe_spearman(x_vals, y_vals) -> SimplifiedResult[Any, Exception]:
+    """
+    分散ゼロや要素不足のとき NaN を返すヘルパ。
+    """
+    if len(x_vals) < 2:
+        return Failure(Exception("safe_spearman: lack of samples."))
+    if _variance_zero(x_vals) or _variance_zero(y_vals):
+        return Failure(Exception("safe_spearman: variance is zero."))
+    try:
+        result = spearmanr(x_vals, y_vals)
+        return Success(result)
+    except Exception as e:
+        return Failure(Exception(f"safe_spearman: something wrong happened.: {e}"))
 
 def run_experiments(
     adjs,
@@ -148,7 +161,7 @@ def run_experiments(
 
         # 相関計算
         def r(feat: str) -> tuple[float, float]:
-            match _safe_pearson(deltas_x, deltas_by_feature[feat]):
+            match _safe_spearman(deltas_x, deltas_by_feature[feat]):
                 case Failure(err):
                     logging.info(f"replaced to NaN @ {feat} / {ab_list} / {X}: {err}")
                     return float("nan"), float("nan")

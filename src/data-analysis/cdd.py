@@ -118,7 +118,7 @@ def plot_cd(
     ax.set_ylim(-1.0, cd_y+0.2)  # 上限をCDバーが見えるように調整
     ax.axis('off')
     plt.title(title)
-    plt.show()
+    plt.savefig("data/subjective/ccd1.png")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -161,15 +161,15 @@ def plot_boxplots(data: pd.DataFrame, names, title='Score Distributions (Sorted 
 
     ax.set_title(title)
     ax.set_ylabel('評価値')
-    ax.set_xlabel('軸（平均点の高い順）')
+    ax.set_xlabel('軸名')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
-    plt.show()
+    plt.savefig("data/subjective/boxplot.png")
 
 
 def main():
     # --- 1. データ読み込み & 列抽出 ---
-    csv_file_path = 'questionaire/subjective_questionaire.csv'
+    csv_file_path = 'data/subjective/questionaires.csv'
     df = pd.read_csv(csv_file_path)
 
     cols = [

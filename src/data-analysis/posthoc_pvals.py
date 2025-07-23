@@ -1,17 +1,37 @@
 from collections import defaultdict
 import pandas as pd
 import numpy as np
-from scipy.stats import friedmanchisquare, rankdata
+from scipy.stats import friedmanchisquare, rankdata, wilcoxon
 import scikit_posthocs as sp
-import networkx as nx
 import matplotlib.pyplot as plt
 import japanize_matplotlib
-from sklearn.cluster import SpectralClustering
-import matplotlib.cm as cm
+import seaborn as sns  # 追加
+from statsmodels.stats.libqsturng import qsturng  # CD計算用（必要なら）
+# import networkx as nx ...（グラフ不要なら省略でOK）
+
+def compute_avg_ranks(data):
+    ranks = np.array([rankdata(row) for row in data])
+    return ranks.mean(axis=0)
+
+def wilcoxon_r(x, y):
+    """対応あり2群用 r を返す (|Z|/sqrt(n_nonzero))"""
+    # NaN除去
+    mask = (~np.isnan(x)) & (~np.isnan(y))
+    x, y = x[mask], y[mask]
+    diff = x - y
+    nz = np.count_nonzero(diff)  # 非ゼロ差のみ使う
+    if nz == 0:
+        return np.nan  # 全部同点ならr定義できない
+    W, p = wilcoxon(x, y, zero_method='pratt', alternative='two-sided', correction=False)
+    # Zを手計算
+    mean_W = nz * (nz + 1) / 4
+    sd_W = np.sqrt(nz * (nz + 1) * (2 * nz + 1) / 24)
+    z = (W - mean_W) / sd_W
+    r = abs(z) / np.sqrt(nz)
+    return r
 
 def main():
-    # --- 1. データ読み込み & 列抽出 ---
-    csv_file_path = 'questionaire/subjective_questionaire.csv'
+    csv_file_path = 'data/subjective/questionaires.csv'
     df = pd.read_csv(csv_file_path)
 
     cols = [
@@ -20,98 +40,79 @@ def main():
         '勇敢な1', '勇敢な2',
         '堂々とした1', '堂々とした2',
         '静かな', '沈んだ',
-        #"クラシック感（1つめ）", "クラシック感（2つめ）",
-        #"ジャズ感（1つめ）", "ジャズ感（2つめ）",
-        #"スイング感（1つめ）", "スイング感（2つめ）"
+        "クラシック感1", "クラシック感2",
+        "ジャズ感1", "ジャズ感2",
+        "スイング感1", "スイング感2"
     ]
     cols_en = [
         # 'spring',
         'bright', 'capriccioso', 'solemn',
         'brave1', 'brave2', 'imposing1', 'imposing2',
         'quiet', 'sunk',
-        # 'classic1', 'classic2', 'jazz1', 'jazz2', 'swing1', 'swing2'
+        'classic1', 'classic2', 'jazz1', 'jazz2', 'swing1', 'swing2'
     ]
+
     df2 = df[cols].copy().dropna()
 
-    # --- 2. Friedman検定 ---
+    # --- Friedman ---
     stat, p_all = friedmanchisquare(*[df2[c] for c in cols])
-    print(f"Friedman検定：chi2 = {stat:.3f}, p = {p_all}")
-    N, k = df2.shape[0], len(cols)
-    print(N, k)
-    epsilon2 = (stat)/(N*(k-1))
-    print(f"効果量: {epsilon2}")
-    
+    N, k = df2.shape
+    epsilon2 = stat / (N * (k - 1))
+    print(f"Friedman: chi2={stat:.3f}, p={p_all:.3g}, epsilon^2={epsilon2:.3f}")
 
-    if p_all < 0.05:
-        # --- 3. Nemenyi Post-hoc で p 値行列取得 ---
-        posthoc_pvals = sp.posthoc_nemenyi_friedman(df2.values)
+    if p_all >= 0.05:
+        print("全体差なし → ここで終了（または探索的に進めるなら進める）")
+        return
 
-        # --- 4. 重み付きグラフ G の構築 ---
-        G = nx.Graph()
-        n = len(cols_en)
-        G.add_nodes_from(range(n))
-        for i in range(n):
-            for j in range(i+1, n):
-                G.add_edge(i, j, weight=posthoc_pvals.iloc[i, j])
+    # --- Posthoc (Nemenyi) p行列 ---
+    posthoc_pvals = sp.posthoc_nemenyi_friedman(df2.values)
+    posthoc_pvals.index = cols
+    posthoc_pvals.columns = cols
 
-        # --- 5. スペクトラルクラスタリング ---
-        sc = SpectralClustering(
-            n_clusters=4,
-            affinity='precomputed',
-        )
-        labels = sc.fit_predict(posthoc_pvals.values)
-        for k in range(4):
-            members = [cols[i] for i, lbl in enumerate(labels) if lbl == k]
-            print(f"Cluster{k+1}: {members}")
-        
-        # --- 6. グラフ描画 ---
-        draw_graph(G, labels, cols_en)
-    else:
-        print("全体差に有意性なし → Post-hoc未実施")
+    # --- r行列（Wilcoxon符号付） ---
+    rmat = pd.DataFrame(np.nan, index=cols, columns=cols)
+    for i, c1 in enumerate(cols):
+        for j, c2 in enumerate(cols):
+            if i >= j:  # 下三角だけ計算してコピーでOK
+                continue
+            r = wilcoxon_r(df2[c1].values, df2[c2].values)
+            rmat.loc[c1, c2] = r
+            rmat.loc[c2, c1] = r
 
+    # --- CD 図順（平均順位順） ---
+    avg_ranks = compute_avg_ranks(df2.values)  # 小さいほど良いならこのまま
+    order_idx = np.argsort(avg_ranks)          # CD図と同じ並べ方にしたいならこれで
+    ordered_cols = [cols[i] for i in order_idx]
 
-def draw_graph(G, labels, cols_en):
-    """
-    G       : networkx の重み付き無向グラフ
-    labels  : 各ノードに対するクラスタID のリスト/配列
-    cols_en : ノードラベル（英語名）のリスト
-    """
+    # 並べ替え
+    pmat_ord = posthoc_pvals.loc[ordered_cols, ordered_cols]
+    rmat_ord = rmat.loc[ordered_cols, ordered_cols]
 
-    # コミュニティ数と色マップ
-    comms = sorted(set(labels))
-    cmap = plt.get_cmap('tab10')
-    community_colors = {com: cmap(i) for i, com in enumerate(comms)}
+    # --- ヒートマップ描画 ---
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    # p値ヒートマップ（-log10にしてもよい）
+    mask = np.triu(np.ones_like(pmat_ord, dtype=bool))
+    sns.heatmap(pmat_ord, mask=mask, ax=axes[0], annot=True, fmt=".2f",
+                cmap="Blues_r", cbar_kws={"label":"p-value"})
+    axes[0].set_title("補正済みp値 (Nemenyi)")
+    axes[0].tick_params(axis='x', labelrotation=45)
+    plt.setp(axes[0].get_xticklabels(), ha='right')
 
-    # ノードごとの色リスト
-    node_colors = [community_colors[labels[n]] for n in G.nodes()]
+    # rヒートマップ（|r|推奨）
+    sns.heatmap(rmat_ord.abs(), mask=mask, ax=axes[1], annot=True, fmt=".2f",
+                cmap="magma", vmin=0, vmax=1, cbar_kws={"label":"|r|"})
+    axes[1].set_title("Rosenthalの効果量r")
+    axes[1].tick_params(axis='x', labelrotation=45)
+    plt.setp(axes[1].get_xticklabels(), ha='right')
 
-    # エッジ幅（p値に比例）
-    scale = 5
-    edge_widths = [G[u][v]['weight'] * scale for u, v in G.edges()]
-
-    # レイアウト（重みを反映）
-    pos = nx.spring_layout(G, weight='weight', seed=0)
-
-    plt.figure(figsize=(7,7))
-    # ノード
-    nx.draw_networkx_nodes(G, pos,
-                           node_color=node_colors,
-                           node_size=600)
-    # エッジ
-    nx.draw_networkx_edges(G, pos,
-                           width=edge_widths,
-                           alpha=0.7,
-                           edge_color='gray')
-    # ラベル
-    nx.draw_networkx_labels(G, pos,
-                            labels={i: cols_en[i] for i in G.nodes()},
-                            font_size=10)
-
-    plt.title("スペクトルクラスタリングによるコミュニティ分割", fontsize=14)
-    plt.axis('off')
     plt.tight_layout()
     plt.show()
 
+    # --- もしCD図も描きたいならここでavg_ranksとCD計算して別途描画 ---
+    # 例:
+    # q_alpha = qsturng(0.95, k, np.inf)  # α=0.05
+    # CD = q_alpha * np.sqrt(k*(k+1)/(6*N))
+    # cd_plot(avg_ranks, CD, labels=cols_en)  # 自作関数で
 
 if __name__ == "__main__":
     main()
